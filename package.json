@@ -1,0 +1,31 @@
+{
+  "name": "chessudoku_server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts",
+    "dev:watch": "nodemon --exec ts-node src/server.ts",
+    "clean": "rimraf dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/express": "^4.17.23",
+    "dotenv": "^17.2.1",
+    "express": "^4.21.2",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/pg": "^8.15.5",
+    "nodemon": "^3.1.10",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.2"
+  }
+}
