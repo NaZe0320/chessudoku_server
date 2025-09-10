@@ -32,24 +32,12 @@ export class PuzzleController extends BaseController<Puzzle> {
             );
 
             if (!puzzle) {
-                res.status(404).json({
-                    success: false,
-                    message: '조건에 맞는 퍼즐을 찾을 수 없습니다'
-                });
-                return;
+                return this.sendError(res, '조건에 맞는 퍼즐을 찾을 수 없습니다', 404);
             }
 
-            res.json({
-                success: true,
-                message: '퍼즐 조회 성공',
-                data: puzzle
-            });
+            this.sendSuccess(res, puzzle, '퍼즐 조회 성공');
         } catch (error) {
-            const err = error as Error;
-            res.status(500).json({
-                success: false,
-                message: err.message
-            });
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -63,34 +51,18 @@ export class PuzzleController extends BaseController<Puzzle> {
             
             const targetDate = date ? new Date(date as string) : new Date();
             if (isNaN(targetDate.getTime())) {
-                res.status(400).json({
-                    success: false,
-                    message: '유효하지 않은 날짜 형식입니다'
-                });
-                return;
+                return this.sendError(res, '유효하지 않은 날짜 형식입니다', 400);
             }
 
             const puzzle = await this.puzzleService.getDailyPuzzle(targetDate);
 
             if (!puzzle) {
-                res.status(404).json({
-                    success: false,
-                    message: '해당 날짜의 데일리 퍼즐이 없습니다'
-                });
-                return;
+                return this.sendError(res, '해당 날짜의 데일리 퍼즐이 없습니다', 404);
             }
 
-            res.json({
-                success: true,
-                message: '데일리 퍼즐 조회 성공',
-                data: puzzle
-            });
+            this.sendSuccess(res, puzzle, '데일리 퍼즐 조회 성공');
         } catch (error) {
-            const err = error as Error;
-            res.status(500).json({
-                success: false,
-                message: err.message
-            });
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -103,11 +75,7 @@ export class PuzzleController extends BaseController<Puzzle> {
             const { puzzle_type, difficulty, puzzle_data, answer_data, daily_date } = req.body;
 
             if (!puzzle_type || !difficulty || !puzzle_data || !answer_data) {
-                res.status(400).json({
-                    success: false,
-                    message: '퍼즐 타입, 난이도, 퍼즐 데이터, 답안 데이터는 필수입니다'
-                });
-                return;
+                return this.sendError(res, '퍼즐 타입, 난이도, 퍼즐 데이터, 답안 데이터는 필수입니다', 400);
             }
 
             const puzzleData = {
@@ -119,18 +87,9 @@ export class PuzzleController extends BaseController<Puzzle> {
             };
 
             const puzzle = await this.puzzleService.createPuzzle(puzzleData);
-
-            res.status(201).json({
-                success: true,
-                message: '퍼즐이 성공적으로 생성되었습니다',
-                data: puzzle
-            });
+            this.sendSuccess(res, puzzle, '퍼즐이 성공적으로 생성되었습니다', 201);
         } catch (error) {
-            const err = error as Error;
-            res.status(500).json({
-                success: false,
-                message: err.message
-            });
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -144,32 +103,18 @@ export class PuzzleController extends BaseController<Puzzle> {
 
             const puzzleIdNum = parseInt(puzzle_id);
             if (isNaN(puzzleIdNum)) {
-                res.status(400).json({
-                    success: false,
-                    message: '유효하지 않은 퍼즐 ID입니다'
-                });
-                return;
+                return this.sendError(res, '유효하지 않은 퍼즐 ID입니다', 400);
             }
 
             const deleted = await this.puzzleService.deletePuzzle(puzzleIdNum);
 
             if (deleted) {
-                res.json({
-                    success: true,
-                    message: '퍼즐이 성공적으로 삭제되었습니다'
-                });
+                this.sendSuccess(res, null, '퍼즐이 성공적으로 삭제되었습니다');
             } else {
-                res.status(404).json({
-                    success: false,
-                    message: '퍼즐을 찾을 수 없습니다'
-                });
+                return this.sendError(res, '퍼즐을 찾을 수 없습니다', 404);
             }
         } catch (error) {
-            const err = error as Error;
-            res.status(500).json({
-                success: false,
-                message: err.message
-            });
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -177,17 +122,11 @@ export class PuzzleController extends BaseController<Puzzle> {
      * BaseController 메서드 오버라이드
      */
     override async getAll(req: Request, res: Response): Promise<void> {
-        res.status(403).json({
-            success: false,
-            message: '퍼즐 목록 조회는 지원하지 않습니다. /api/puzzle/random을 사용하세요'
-        });
+        this.sendError(res, '퍼즐 목록 조회는 지원하지 않습니다. /api/puzzle/random을 사용하세요', 403);
     }
 
     override async getById(req: Request, res: Response): Promise<void> {
-        res.status(403).json({
-            success: false,
-            message: '퍼즐 ID로 조회는 지원하지 않습니다. /api/puzzle/random을 사용하세요'
-        });
+        this.sendError(res, '퍼즐 ID로 조회는 지원하지 않습니다. /api/puzzle/random을 사용하세요', 403);
     }
 
     override async create(req: Request, res: Response): Promise<void> {

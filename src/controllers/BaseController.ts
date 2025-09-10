@@ -107,6 +107,72 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
     }
 
     /**
+     * 에러 상태 코드를 자동으로 결정하여 에러 응답 전송
+     */
+    protected sendErrorAuto(
+        res: Response, 
+        error: Error | string
+    ): void {
+        const message = error instanceof Error ? error.message : error;
+        const statusCode = this.getErrorStatusCode(message);
+        this.sendError(res, error, statusCode);
+    }
+
+    /**
+     * 에러 메시지 기반 상태 코드 결정
+     */
+    private getErrorStatusCode(message: string): number {
+        const lowerMessage = message.toLowerCase();
+        
+        // 400 Bad Request
+        if (lowerMessage.includes('필수') || 
+            lowerMessage.includes('유효하지 않은') || 
+            lowerMessage.includes('형식') || 
+            lowerMessage.includes('조건') ||
+            lowerMessage.includes('검증') ||
+            lowerMessage.includes('잘못된')) {
+            return 400;
+        }
+        
+        // 401 Unauthorized
+        if (lowerMessage.includes('인증') || 
+            lowerMessage.includes('권한') ||
+            lowerMessage.includes('토큰')) {
+            return 401;
+        }
+        
+        // 403 Forbidden
+        if (lowerMessage.includes('접근') || 
+            lowerMessage.includes('금지') ||
+            lowerMessage.includes('수정할 수 없습니다')) {
+            return 403;
+        }
+        
+        // 404 Not Found
+        if (lowerMessage.includes('찾을 수 없습니다') || 
+            lowerMessage.includes('존재하지') ||
+            lowerMessage.includes('없습니다')) {
+            return 404;
+        }
+        
+        // 409 Conflict
+        if (lowerMessage.includes('이미') || 
+            lowerMessage.includes('중복') ||
+            lowerMessage.includes('충돌')) {
+            return 409;
+        }
+        
+        // 422 Unprocessable Entity
+        if (lowerMessage.includes('처리할 수 없는') || 
+            lowerMessage.includes('유효성 검사')) {
+            return 422;
+        }
+        
+        // 기본값: 500 Internal Server Error
+        return 500;
+    }
+
+    /**
      * 모든 레코드 조회
      * GET /api/resource
      */
@@ -115,7 +181,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             const data = await this.service.getAll();
             this.sendSuccess(res, data, '데이터 조회 성공');
         } catch (error) {
-            this.sendError(res, error as Error, 500);
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -158,7 +224,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
                 }
             );
         } catch (error) {
-            this.sendError(res, error as Error, 500);
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -295,7 +361,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             
             this.sendSuccess(res, { deletedCount }, `${deletedCount}개의 데이터가 삭제되었습니다`);
         } catch (error) {
-            this.sendError(res, error as Error, 500);
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -310,7 +376,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             
             this.sendSuccess(res, { count }, '개수 조회 성공');
         } catch (error) {
-            this.sendError(res, error as Error, 500);
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -330,7 +396,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             
             this.sendSuccess(res, { exists }, '존재 여부 확인 성공');
         } catch (error) {
-            this.sendError(res, error as Error, 500);
+            this.sendErrorAuto(res, error as Error);
         }
     }
 

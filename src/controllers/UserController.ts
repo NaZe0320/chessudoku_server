@@ -27,34 +27,13 @@ export class UserController extends BaseController<User> {
             const { device_id } = req.body;
 
             if (!device_id) {
-                res.status(400).json({
-                    success: false,
-                    message: '디바이스 ID는 필수입니다'
-                });
-                return;
+                return this.sendError(res, '디바이스 ID는 필수입니다', 400);
             }
 
             const result = await this.userService.registerUser({ device_id });
-
-            res.status(201).json({
-                success: true,
-                message: '사용자가 성공적으로 등록되었습니다',
-                data: result
-            });
+            this.sendSuccess(res, result, '사용자가 성공적으로 등록되었습니다', 201);
         } catch (error) {
-            const err = error as Error;
-            let statusCode = 500;
-            
-            if (err.message.includes('이미 등록된') || err.message.includes('중복')) {
-                statusCode = 409;
-            } else if (err.message.includes('필수') || err.message.includes('검증')) {
-                statusCode = 400;
-            }
-
-            res.status(statusCode).json({
-                success: false,
-                message: err.message
-            });
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -69,24 +48,12 @@ export class UserController extends BaseController<User> {
             const user = await this.userService.getUserByDeviceId(device_id);
 
             if (!user) {
-                res.status(404).json({
-                    success: false,
-                    message: '사용자를 찾을 수 없습니다'
-                });
-                return;
+                return this.sendError(res, '사용자를 찾을 수 없습니다', 404);
             }
 
-            res.json({
-                success: true,
-                message: '사용자 정보 조회 성공',
-                data: user
-            });
+            this.sendSuccess(res, user, '사용자 정보 조회 성공');
         } catch (error) {
-            const err = error as Error;
-            res.status(500).json({
-                success: false,
-                message: err.message
-            });
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -102,22 +69,12 @@ export class UserController extends BaseController<User> {
             const deleted = await this.userService.deleteUser(user_id);
 
             if (deleted) {
-                res.json({
-                    success: true,
-                    message: '사용자가 성공적으로 삭제되었습니다'
-                });
+                this.sendSuccess(res, null, '사용자가 성공적으로 삭제되었습니다');
             } else {
-                res.status(404).json({
-                    success: false,
-                    message: '사용자를 찾을 수 없습니다'
-                });
+                return this.sendError(res, '사용자를 찾을 수 없습니다', 404);
             }
         } catch (error) {
-            const err = error as Error;
-            res.status(500).json({
-                success: false,
-                message: err.message
-            });
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -130,24 +87,12 @@ export class UserController extends BaseController<User> {
             const user = await this.userService.getUserById(id);
 
             if (!user) {
-                res.status(404).json({
-                    success: false,
-                    message: '사용자를 찾을 수 없습니다'
-                });
-                return;
+                return this.sendError(res, '사용자를 찾을 수 없습니다', 404);
             }
 
-            res.json({
-                success: true,
-                message: '사용자 정보 조회 성공',
-                data: user
-            });
+            this.sendSuccess(res, user, '사용자 정보 조회 성공');
         } catch (error) {
-            const err = error as Error;
-            res.status(500).json({
-                success: false,
-                message: err.message
-            });
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -157,10 +102,7 @@ export class UserController extends BaseController<User> {
     }
 
     override async update(req: Request, res: Response): Promise<void> {
-        res.status(403).json({
-            success: false,
-            message: '사용자 정보는 수정할 수 없습니다'
-        });
+        this.sendError(res, '사용자 정보는 수정할 수 없습니다', 403);
     }
 
     override async delete(req: Request, res: Response): Promise<void> {

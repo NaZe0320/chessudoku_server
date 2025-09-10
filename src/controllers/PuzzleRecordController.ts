@@ -26,11 +26,7 @@ export class PuzzleRecordController extends BaseController<PuzzleRecord> {
             const { user_id, puzzle_id, puzzle_type, solve_time, hints_used } = req.body;
 
             if (!user_id || !puzzle_id || !puzzle_type || solve_time === undefined || hints_used === undefined) {
-                res.status(400).json({
-                    success: false,
-                    message: '사용자 ID, 퍼즐 ID, 퍼즐 타입, 해결 시간, 힌트 사용 횟수는 필수입니다'
-                });
-                return;
+                return this.sendError(res, '사용자 ID, 퍼즐 ID, 퍼즐 타입, 해결 시간, 힌트 사용 횟수는 필수입니다', 400);
             }
 
             const recordData = {
@@ -43,26 +39,9 @@ export class PuzzleRecordController extends BaseController<PuzzleRecord> {
             };
 
             const record = await this.puzzleRecordService.addRecord(recordData);
-
-            res.status(201).json({
-                success: true,
-                message: '퍼즐 기록이 성공적으로 추가되었습니다',
-                data: record
-            });
+            this.sendSuccess(res, record, '퍼즐 기록이 성공적으로 추가되었습니다', 201);
         } catch (error) {
-            const err = error as Error;
-            let statusCode = 500;
-            
-            if (err.message.includes('찾을 수 없습니다')) {
-                statusCode = 404;
-            } else if (err.message.includes('유효하지 않은') || err.message.includes('검증') || err.message.includes('필수')) {
-                statusCode = 400;
-            }
-
-            res.status(statusCode).json({
-                success: false,
-                message: err.message
-            });
+            this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -71,17 +50,11 @@ export class PuzzleRecordController extends BaseController<PuzzleRecord> {
      * BaseController 메서드 오버라이드
      */
     override async getAll(req: Request, res: Response): Promise<void> {
-        res.status(403).json({
-            success: false,
-            message: '퍼즐 기록 조회는 지원하지 않습니다'
-        });
+        this.sendError(res, '퍼즐 기록 조회는 지원하지 않습니다', 403);
     }
 
     override async getById(req: Request, res: Response): Promise<void> {
-        res.status(403).json({
-            success: false,
-            message: '퍼즐 기록 조회는 지원하지 않습니다'
-        });
+        this.sendError(res, '퍼즐 기록 조회는 지원하지 않습니다', 403);
     }
 
     override async create(req: Request, res: Response): Promise<void> {
@@ -90,17 +63,11 @@ export class PuzzleRecordController extends BaseController<PuzzleRecord> {
     }
 
     override async update(req: Request, res: Response): Promise<void> {
-        res.status(403).json({
-            success: false,
-            message: '퍼즐 기록은 수정할 수 없습니다'
-        });
+        this.sendError(res, '퍼즐 기록은 수정할 수 없습니다', 403);
     }
 
     override async delete(req: Request, res: Response): Promise<void> {
-        res.status(403).json({
-            success: false,
-            message: '퍼즐 기록은 삭제할 수 없습니다'
-        });
+        this.sendError(res, '퍼즐 기록은 삭제할 수 없습니다', 403);
     }
 }
 
