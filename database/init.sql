@@ -20,21 +20,6 @@ CREATE TABLE IF NOT EXISTS `User` (
     KEY `idx_user_create_at` (`create_at`)
 );
 
--- ====================
--- 소셜 계정 테이블
--- ====================
-CREATE TABLE IF NOT EXISTS `SocialAccount` (
-    `social_acount_id` INT NOT NULL AUTO_INCREMENT,
-    `user_id` VARCHAR(8) NOT NULL,
-    `provider` VARCHAR(20) NOT NULL,
-    `provider_id` VARCHAR(255) NOT NULL,
-    `create_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`social_acount_id`, `user_id`),
-    KEY `idx_social_user_id` (`user_id`),
-    KEY `idx_social_provider` (`provider`),
-    KEY `idx_social_provider_id` (`provider_id`),
-    CONSTRAINT `FK_User_TO_SocialAccount_1` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`) ON DELETE CASCADE
-);
 
 -- ====================
 -- 퍼즐 테이블
@@ -95,12 +80,6 @@ VALUES (
     NOW()
 ) ON DUPLICATE KEY UPDATE `nickname` = VALUES(`nickname`);
 
--- 테스트 소셜 계정
-INSERT INTO `SocialAccount` (`user_id`, `provider`, `provider_id`, `create_at`) 
-VALUES 
-    ('ABC12345', 'google', 'google_123456789', NOW()),
-    ('XYZ67890', 'apple', 'apple_987654321', NOW())
-ON DUPLICATE KEY UPDATE `provider_id` = VALUES(`provider_id`);
 
 -- 테스트 퍼즐들
 INSERT INTO `Puzzle` (`puzzle_id`, `puzzle_type`, `difficulty`, `puzzle_data`, `answer_data`, `daily_date`) 

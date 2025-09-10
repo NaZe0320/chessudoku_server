@@ -8,6 +8,7 @@ export interface UserData {
     device_id?: string;
     nickname?: string;
     create_at?: Date;
+    is_deleted?: boolean;
 }
 
 /**
@@ -18,6 +19,7 @@ export interface DatabaseUserData {
     device_id: string;
     nickname: string;
     create_at: Date;
+    is_deleted: boolean;
 }
 
 /**
@@ -28,6 +30,7 @@ export class User implements DatabaseRecord {
     public device_id: string;
     public nickname: string;
     public create_at: Date;
+    public is_deleted: boolean;
     
     // DatabaseRecord 호환성을 위한 id
     public get id(): string {
@@ -42,6 +45,7 @@ export class User implements DatabaseRecord {
         this.device_id = data.device_id || '';
         this.nickname = data.nickname || '';
         this.create_at = data.create_at || new Date();
+        this.is_deleted = data.is_deleted || false;
         
         this.created_at = this.create_at;
         this.updated_at = this.create_at;
@@ -54,7 +58,8 @@ export class User implements DatabaseRecord {
         return {
             device_id: this.device_id,
             nickname: this.nickname,
-            create_at: this.create_at
+            create_at: this.create_at,
+            is_deleted: this.is_deleted
         };
     }
 

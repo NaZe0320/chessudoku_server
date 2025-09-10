@@ -1,417 +1,116 @@
 import { BaseService } from './BaseService';
 import { PuzzleRepository } from '../repositories/PuzzleRepository';
-import { AccountRepository } from '../repositories/AccountRepository';
-import { 
-    PuzzleRecord, 
-    PuzzleCompletionRequest, 
-    PuzzleRecordQueryOptions,
-    PuzzleStats,
-    DatabasePuzzleRecordData 
-} from '../models/PuzzleRecord';
+import { Puzzle, PuzzleData } from '../models/Puzzle';
 
 /**
- * 퍼즐 기록 관리 서비스
+ * 퍼즐 관리 서비스
  */
-export class PuzzleService extends BaseService<PuzzleRecord> {
+export class PuzzleService extends BaseService<Puzzle> {
     private puzzleRepository: PuzzleRepository;
-    private accountRepository: AccountRepository;
 
-    constructor(puzzleRepository: PuzzleRepository, accountRepository: AccountRepository) {
+    constructor(puzzleRepository: PuzzleRepository) {
         super(puzzleRepository);
         this.puzzleRepository = puzzleRepository;
-        this.accountRepository = accountRepository;
     }
 
     /**
-     * 퍼즐 완성 기록 추가
+     * 조건에 맞는 랜덤 퍼즐 조회
      */
-    async addPuzzleCompletion(
-        accountId: string, 
-        completionData: PuzzleCompletionRequest
-    ): Promise<DatabasePuzzleRecordData> {
+    async getRandomPuzzle(puzzleType?: string, difficulty?: string): Promise<Puzzle | null> {
         try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
+            const conditions: any = {};
+            if (puzzleType) {
+                conditions.puzzle_type = puzzleType;
+            }
+            if (difficulty) {
+                conditions.difficulty = difficulty;
             }
 
-            // 계정 존재 확인
-            const account = await this.accountRepository.findByAccountId(accountId);
-            if (!account) {
-                throw new Error('계정을 찾을 수 없습니다');
-            }
-
-            // 퍼즐 기록 생성
-            const puzzleRecord = PuzzleRecord.fromCompletionRequest(accountId, completionData);
-
-            // 데이터 검증
-            const validation = puzzleRecord.validate();
-            if (!validation.isValid) {
-                throw new Error(`퍼즐 기록 검증 실패: ${validation.errors.join(', ')}`);
-            }
-
-            // 기록 저장
-            const savedRecord = await this.puzzleRepository.addPuzzleRecord(puzzleRecord);
-
-            return savedRecord.toJSON();
-        } catch (error) {
-            console.error('Error in addPuzzleCompletion:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 특정 계정의 퍼즐 기록 조회
-     */
-    async getPuzzleRecords(
-        accountId: string, 
-        options: PuzzleRecordQueryOptions = {}
-    ): Promise<{
-        records: DatabasePuzzleRecordData[];
-        total: number;
-        page: number;
-        limit: number;
-    }> {
-        try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
-            }
-
-            // 계정 존재 확인
-            const accountExists = await this.accountRepository.checkAccountIdExists(accountId);
-            if (!accountExists) {
-                throw new Error('계정을 찾을 수 없습니다');
-            }
-
-            // 페이지네이션 설정
-            const page = Math.max(1, Math.floor((options.offset || 0) / (options.limit || 10)) + 1);
-            const limit = Math.min(100, Math.max(1, options.limit || 10));
-            const offset = (page - 1) * limit;
-
-            // 총 개수 조회
-            const total = await this.puzzleRepository.countByAccountId(
-                accountId, 
-                options.puzzle_type, 
-                options.difficulty
-            );
-
-            // 기록 조회
-            const queryOptions = { ...options, limit, offset };
-            const records = await this.puzzleRepository.findByAccountId(accountId, queryOptions);
-
-            return {
-                records: records.map(record => record.toJSON()),
-                total,
-                page,
-                limit
-            };
-        } catch (error) {
-            console.error('Error in getPuzzleRecords:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 특정 계정의 최고 기록들 조회
-     */
-    async getBestRecords(accountId: string): Promise<{
-        bestTime: DatabasePuzzleRecordData | null;
-        fewestHints: DatabasePuzzleRecordData | null;
-        bestByType: { [type: string]: DatabasePuzzleRecordData };
-        bestByDifficulty: { [difficulty: string]: DatabasePuzzleRecordData };
-    }> {
-        try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
-            }
-
-            const bestRecords = await this.puzzleRepository.getBestRecords(accountId);
-
-            return {
-                bestTime: bestRecords.bestTime ? bestRecords.bestTime.toJSON() : null,
-                fewestHints: bestRecords.fewestHints ? bestRecords.fewestHints.toJSON() : null,
-                bestByType: Object.fromEntries(
-                    Object.entries(bestRecords.bestByType).map(([type, record]) => [type, record.toJSON()])
-                ),
-                bestByDifficulty: Object.fromEntries(
-                    Object.entries(bestRecords.bestByDifficulty).map(([difficulty, record]) => [difficulty, record.toJSON()])
-                )
-            };
-        } catch (error) {
-            console.error('Error in getBestRecords:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 특정 계정의 통계 조회
-     */
-    async getPuzzleStats(accountId: string): Promise<PuzzleStats> {
-        try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
-            }
-
-            return await this.puzzleRepository.calculateStatsByAccountId(accountId);
-        } catch (error) {
-            console.error('Error in getPuzzleStats:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 최근 퍼즐 기록 조회
-     */
-    async getRecentRecords(accountId: string, limit: number = 10): Promise<DatabasePuzzleRecordData[]> {
-        try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
-            }
-
-            // 제한 설정
-            const safeLimit = Math.min(100, Math.max(1, limit));
-
-            const records = await this.puzzleRepository.findRecentRecords(accountId, safeLimit);
-            return records.map(record => record.toJSON());
-        } catch (error) {
-            console.error('Error in getRecentRecords:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 특정 기간 내 퍼즐 기록 조회
-     */
-    async getRecordsByDateRange(
-        accountId: string, 
-        startDate: Date, 
-        endDate: Date
-    ): Promise<DatabasePuzzleRecordData[]> {
-        try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
-            }
-
-            // 날짜 검증
-            if (startDate > endDate) {
-                throw new Error('시작 날짜는 종료 날짜보다 이전이어야 합니다');
-            }
-
-            // 최대 1년 제한
-            const oneYearInMs = 365 * 24 * 60 * 60 * 1000;
-            if (endDate.getTime() - startDate.getTime() > oneYearInMs) {
-                throw new Error('조회 기간은 최대 1년입니다');
-            }
-
-            const records = await this.puzzleRepository.findByDateRange(accountId, startDate, endDate);
-            return records.map(record => record.toJSON());
-        } catch (error) {
-            console.error('Error in getRecordsByDateRange:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 일별 플레이 통계 조회
-     */
-    async getDailyStats(
-        accountId: string, 
-        days: number = 30
-    ): Promise<Array<{
-        date: string;
-        count: number;
-        total_time: number;
-        avg_hints: number;
-    }>> {
-        try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
-            }
-
-            // 일수 제한
-            const safeDays = Math.min(365, Math.max(1, days));
-
-            return await this.puzzleRepository.getDailyStats(accountId, safeDays);
-        } catch (error) {
-            console.error('Error in getDailyStats:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 적은 힌트 기록들 조회
-     */
-    async getLowHintRecords(
-        accountId: string, 
-        maxHints: number, 
-        puzzleType?: string
-    ): Promise<DatabasePuzzleRecordData[]> {
-        try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
-            }
-
-            // 힌트 수 검증
-            if (maxHints < 0) {
-                throw new Error('최대 힌트 수는 0 이상이어야 합니다');
-            }
-
-            const records = await this.puzzleRepository.findByMaxHints(accountId, maxHints, puzzleType);
-            return records.map(record => record.toJSON());
-        } catch (error) {
-            console.error('Error in getLowHintRecords:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 빠른 기록들 조회 (특정 시간 이하)
-     */
-    async getFastRecords(
-        accountId: string, 
-        maxTime: number, 
-        puzzleType?: string
-    ): Promise<DatabasePuzzleRecordData[]> {
-        try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
-            }
-
-            // 시간 검증
-            if (maxTime <= 0) {
-                throw new Error('최대 시간은 0보다 커야 합니다');
-            }
-
-            const records = await this.puzzleRepository.findByMaxTime(accountId, maxTime, puzzleType);
-            return records.map(record => record.toJSON());
-        } catch (error) {
-            console.error('Error in getFastRecords:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 글로벌 순위 조회
-     */
-    async getGlobalRanking(
-        puzzleType: string, 
-        difficulty?: string, 
-        limit: number = 100
-    ): Promise<Array<{
-        rank: number;
-        account_id: string;
-        hint_count: number;
-        time_taken: number;
-        completed_at: Date;
-    }>> {
-        try {
-            // 파라미터 검증
-            if (!puzzleType || puzzleType.trim() === '') {
-                throw new Error('퍼즐 타입은 필수입니다');
-            }
-
-            const safeLimit = Math.min(1000, Math.max(1, limit));
-
-            return await this.puzzleRepository.getGlobalRanking(puzzleType, difficulty, safeLimit);
-        } catch (error) {
-            console.error('Error in getGlobalRanking:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 개인 순위 조회 (글로벌 순위에서의 위치)
-     */
-    async getPersonalRanking(
-        accountId: string, 
-        puzzleType: string, 
-        difficulty?: string
-    ): Promise<{
-        rank: number | null;
-        total_participants: number;
-        personal_best: DatabasePuzzleRecordData | null;
-    }> {
-        try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
-            }
-
-            // 글로벌 순위 조회 (큰 범위로)
-            const globalRanking = await this.puzzleRepository.getGlobalRanking(puzzleType, difficulty, 10000);
+            const puzzles = await this.puzzleRepository.findBy(conditions);
             
-            // 개인 순위 찾기
-            const personalRank = globalRanking.find(entry => entry.account_id === accountId);
+            if (puzzles.length === 0) {
+                return null;
+            }
+
+            // 랜덤하게 하나 선택
+            const randomIndex = Math.floor(Math.random() * puzzles.length);
+            return Puzzle.fromDatabaseRow(puzzles[randomIndex]);
+        } catch (error) {
+            console.error('Error in getRandomPuzzle:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 데일리 퍼즐 조회
+     */
+    async getDailyPuzzle(date: Date): Promise<Puzzle | null> {
+        try {
+            const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
             
-            // 개인 최고 기록 조회
-            const personalRecords = await this.puzzleRepository.findByAccountId(accountId, {
-                puzzle_type: puzzleType,
-                difficulty,
-                sort_by: 'hint_count',
-                sort_order: 'ASC',
-                limit: 1
+            const puzzles = await this.puzzleRepository.findBy({
+                puzzle_type: 'daily_challenge',
+                daily_date: dateStr
             });
 
-            return {
-                rank: personalRank ? personalRank.rank : null,
-                total_participants: globalRanking.length,
-                personal_best: personalRecords.length > 0 ? personalRecords[0].toJSON() : null
-            };
+            return puzzles.length > 0 ? Puzzle.fromDatabaseRow(puzzles[0]) : null;
         } catch (error) {
-            console.error('Error in getPersonalRanking:', error);
+            console.error('Error in getDailyPuzzle:', error);
             throw error;
         }
     }
 
     /**
-     * 퍼즐 기록 삭제 (특정 기록)
+     * 퍼즐 생성
      */
-    async deletePuzzleRecord(accountId: string, recordId: number): Promise<boolean> {
+    async createPuzzle(puzzleData: {
+        puzzle_type: string;
+        difficulty: string;
+        puzzle_data: object;
+        answer_data: object;
+        daily_date?: Date | null;
+    }): Promise<Puzzle> {
         try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
+            // 데이터 검증
+            if (!puzzleData.puzzle_type || !puzzleData.difficulty) {
+                throw new Error('퍼즐 타입과 난이도는 필수입니다');
             }
 
-            // 기록 존재 확인 및 소유자 확인
-            const record = await this.puzzleRepository.findById(recordId);
-            if (!record) {
-                throw new Error('퍼즐 기록을 찾을 수 없습니다');
+            if (!puzzleData.puzzle_data || !puzzleData.answer_data) {
+                throw new Error('퍼즐 데이터와 답안 데이터는 필수입니다');
             }
 
-            if (record.account_id !== accountId) {
-                throw new Error('해당 기록에 대한 권한이 없습니다');
-            }
+            const puzzle = new Puzzle({
+                puzzle_type: puzzleData.puzzle_type,
+                difficulty: puzzleData.difficulty,
+                puzzle_data: puzzleData.puzzle_data,
+                answer_data: puzzleData.answer_data,
+                daily_date: puzzleData.daily_date || null
+            });
 
-            // 기록 삭제
-            return await this.puzzleRepository.delete(recordId);
+            const savedPuzzle = await this.puzzleRepository.create(puzzle.toDatabaseJSON());
+            return Puzzle.fromDatabaseRow(savedPuzzle);
         } catch (error) {
-            console.error('Error in deletePuzzleRecord:', error);
+            console.error('Error in createPuzzle:', error);
             throw error;
         }
     }
 
     /**
-     * 특정 계정의 모든 퍼즐 기록 삭제
+     * 퍼즐 삭제
      */
-    async deleteAllRecords(accountId: string): Promise<number> {
+    async deletePuzzle(puzzleId: number): Promise<boolean> {
         try {
-            // 계정 ID 검증
-            if (!accountId || !/^[A-Z0-9]{12}$/.test(accountId)) {
-                throw new Error('유효하지 않은 계정 ID 형식입니다');
+            // 퍼즐 존재 확인
+            const puzzle = await this.puzzleRepository.findById(puzzleId);
+            if (!puzzle) {
+                return false;
             }
 
-            return await this.puzzleRepository.deleteBy({ account_id: accountId });
+            // 퍼즐 삭제
+            return await this.puzzleRepository.delete(puzzleId);
         } catch (error) {
-            console.error('Error in deleteAllRecords:', error);
+            console.error('Error in deletePuzzle:', error);
             throw error;
         }
     }
@@ -421,10 +120,10 @@ export class PuzzleService extends BaseService<PuzzleRecord> {
      */
     protected override async validateData(data: any, isUpdate: boolean = false): Promise<void> {
         if (!data) {
-            throw new Error('퍼즐 데이터가 필요합니다');
+            throw new Error('데이터가 필요합니다');
         }
 
-        const required = ['account_id', 'puzzle_type', 'difficulty', 'time_taken', 'hint_count'];
+        const required = ['puzzle_type', 'difficulty', 'puzzle_data', 'answer_data'];
         for (const field of required) {
             if (!isUpdate && data[field] === undefined) {
                 throw new Error(`${field}는 필수 필드입니다`);
@@ -435,12 +134,12 @@ export class PuzzleService extends BaseService<PuzzleRecord> {
     protected override async beforeCreate(data: any): Promise<any> {
         return {
             ...data,
-            completed_at: data.completed_at || new Date()
+            daily_date: data.daily_date || null
         };
     }
 
-    protected override async afterCreate(result: PuzzleRecord): Promise<PuzzleRecord> {
-        console.log(`새 퍼즐 기록 추가됨: ${result.account_id} - ${result.puzzle_type} (힌트 ${result.hint_count}회)`);
+    protected override async afterCreate(result: Puzzle): Promise<Puzzle> {
+        console.log(`새 퍼즐 생성됨: ${result.puzzle_id} - ${result.puzzle_type} (${result.difficulty})`);
         return result;
     }
 }

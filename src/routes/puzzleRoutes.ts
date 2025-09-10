@@ -2,133 +2,49 @@ import express, { Router } from 'express';
 import { PuzzleController } from '../controllers/PuzzleController';
 import { PuzzleService } from '../services/PuzzleService';
 import { PuzzleRepository } from '../repositories/PuzzleRepository';
-import { AccountRepository } from '../repositories/AccountRepository';
-import { validateRequiredFields, validateInteger, validateNumberRange } from '../middlewares/validator';
+import { validateRequiredFields, validateInteger } from '../middlewares/validator';
 
 // 의존성 주입
 const puzzleRepository = new PuzzleRepository();
-const accountRepository = new AccountRepository();
-const puzzleService = new PuzzleService(puzzleRepository, accountRepository);
+const puzzleService = new PuzzleService(puzzleRepository);
 const puzzleController = new PuzzleController(puzzleService);
 
 const router: Router = express.Router();
 
 /**
- * 퍼즐 완성 기록 추가
- * POST /api/puzzle/:account_id
+ * 조건에 맞는 랜덤 퍼즐 조회
+ * GET /api/puzzle/random
+ * Query: puzzle_type, difficulty (optional)
  */
-router.post('/:account_id',
-    validateRequiredFields(['puzzle_type', 'difficulty', 'time_taken', 'hint_count']),
-    validateNumberRange('time_taken', 0, 86400), // 0초 ~ 24시간
-    validateNumberRange('hint_count', 0, 100),   // 0회 ~ 100회
-    puzzleController.addCompletion
+router.get('/random',
+    puzzleController.getRandomPuzzle
 );
 
 /**
- * 퍼즐 기록 조회 (페이지네이션 포함)
- * GET /api/puzzle/:account_id
- * Query: puzzle_type, difficulty, page, limit, sort_by, sort_order, date_from, date_to
+ * 데일리 퍼즐 조회
+ * GET /api/puzzle/daily
+ * Query: date (optional)
  */
-router.get('/:account_id',
-    puzzleController.getRecords
+router.get('/daily',
+    puzzleController.getDailyPuzzle
 );
 
 /**
- * 퍼즐 통계 조회
- * GET /api/puzzle/:account_id/stats
+ * 퍼즐 생성 (관리자용)
+ * POST /api/puzzle
  */
-router.get('/:account_id/stats',
-    puzzleController.getStats
+router.post('/',
+    validateRequiredFields(['puzzle_type', 'difficulty', 'puzzle_data', 'answer_data']),
+    puzzleController.createPuzzle
 );
 
 /**
- * 최고 기록들 조회
- * GET /api/puzzle/:account_id/best
+ * 퍼즐 삭제 (관리자용)
+ * DELETE /api/puzzle/:puzzle_id
  */
-router.get('/:account_id/best',
-    puzzleController.getBestRecords
-);
-
-/**
- * 최근 기록 조회
- * GET /api/puzzle/:account_id/recent
- * Query: limit (default: 10, max: 100)
- */
-router.get('/:account_id/recent',
-    puzzleController.getRecentRecords
-);
-
-/**
- * 특정 기간 내 기록 조회
- * GET /api/puzzle/:account_id/date-range
- * Query: start_date, end_date (required)
- */
-router.get('/:account_id/date-range',
-    puzzleController.getRecordsByDateRange
-);
-
-/**
- * 일별 플레이 통계 조회
- * GET /api/puzzle/:account_id/daily-stats
- * Query: days (default: 30, max: 365)
- */
-router.get('/:account_id/daily-stats',
-    puzzleController.getDailyStats
-);
-
-/**
- * 낮은 힌트 기록 조회
- * GET /api/puzzle/:account_id/low-hints
- * Query: max_hints (required), puzzle_type (optional)
- */
-router.get('/:account_id/low-hints',
-    puzzleController.getLowHintRecords
-);
-
-/**
- * 빠른 기록 조회
- * GET /api/puzzle/:account_id/fast-records
- * Query: max_time (required), puzzle_type (optional)
- */
-router.get('/:account_id/fast-records',
-    puzzleController.getFastRecords
-);
-
-/**
- * 개인 순위 조회
- * GET /api/puzzle/:account_id/ranking/:puzzle_type
- * Query: difficulty (optional)
- */
-router.get('/:account_id/ranking/:puzzle_type',
-    puzzleController.getPersonalRanking
-);
-
-/**
- * 특정 퍼즐 기록 삭제
- * DELETE /api/puzzle/:account_id/:record_id
- */
-router.delete('/:account_id/:record_id',
-    validateInteger('record_id'),
-    puzzleController.deleteRecord
-);
-
-/**
- * 모든 퍼즐 기록 삭제
- * DELETE /api/puzzle/:account_id/all
- */
-router.delete('/:account_id/all',
-    puzzleController.deleteAllRecords
-);
-
-// === 글로벌 엔드포인트 (특정 계정에 속하지 않음) ===
-
-/**
- * 글로벌 순위 조회
- * GET /api/puzzle/ranking/:puzzle_type
- * Query: difficulty (optional), limit (default: 100, max: 1000)
- */
-router.get('/ranking/:puzzle_type',
-    puzzleController.getGlobalRanking
+router.delete('/:puzzle_id',
+    validateInteger('puzzle_id'),
+    puzzleController.deletePuzzle
 );
 
 export default router;

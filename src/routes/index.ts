@@ -1,6 +1,7 @@
 import express, { Router, Request, Response } from 'express';
-import accountRoutes from './accountRoutes';
+import userRoutes from './userRoutes';
 import puzzleRoutes from './puzzleRoutes';
+import puzzleRecordRoutes from './puzzleRecordRoutes';
 
 const router: Router = express.Router();
 
@@ -12,24 +13,20 @@ router.get('/', (req: Request, res: Response) => {
         typescript: true,
         endpoints: {
             health: '/api/health',
-            account: {
-                register: 'POST /api/account/register',
-                info: 'GET /api/account/:account_id',
-                recover: 'PUT /api/account/:account_id/device',
-                update: 'PUT /api/account/:account_id',
-                premium: 'PUT /api/account/:account_id/premium',
-                delete: 'DELETE /api/account/:account_id',
-                validate: 'GET /api/account/:account_id/validate'
+            user: {
+                register: 'POST /api/user/register',
+                get_by_device: 'GET /api/user/device/:device_id',
+                get_by_id: 'GET /api/user/:user_id',
+                delete: 'DELETE /api/user/:user_id'
             },
             puzzle: {
-                add_completion: 'POST /api/puzzle/:account_id',
-                get_records: 'GET /api/puzzle/:account_id',
-                get_stats: 'GET /api/puzzle/:account_id/stats',
-                get_best: 'GET /api/puzzle/:account_id/best',
-                get_recent: 'GET /api/puzzle/:account_id/recent',
-                low_hints: 'GET /api/puzzle/:account_id/low-hints',
-                global_ranking: 'GET /api/puzzle/ranking/:puzzle_type',
-                personal_ranking: 'GET /api/puzzle/:account_id/ranking/:puzzle_type'
+                get_random: 'GET /api/puzzle/random',
+                get_daily: 'GET /api/puzzle/daily',
+                create: 'POST /api/puzzle',
+                delete: 'DELETE /api/puzzle/:puzzle_id'
+            },
+            puzzle_record: {
+                add: 'POST /api/puzzle-record'
             }
         }
     }, 'ChessSudoku Puzzle API가 정상적으로 작동 중입니다');
@@ -43,18 +40,18 @@ router.get('/health', (req: Request, res: Response) => {
         uptime: process.uptime(),
         memory: process.memoryUsage(),
         environment: process.env.NODE_ENV || 'development',
-        database: 'connected', // 실제로는 DB 연결 체크 로직 추가 가능
+        database: 'connected',
         features: {
-            account_management: true,
-            puzzle_records: true,
-            statistics: true,
-            rankings: true
+            user_management: true,
+            puzzle_management: true,
+            puzzle_records: true
         }
     }, 'API 서버가 정상 상태입니다');
 });
 
 // 라우트 연결
-router.use('/account', accountRoutes);
+router.use('/user', userRoutes);
 router.use('/puzzle', puzzleRoutes);
+router.use('/puzzle-record', puzzleRecordRoutes);
 
 export default router;
