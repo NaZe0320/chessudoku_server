@@ -1,5 +1,6 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
 
 // 환경변수 로드
 dotenv.config();
@@ -9,6 +10,7 @@ import { testConnection, closeDatabase } from './config/database';
 import errorHandler from './middlewares/errorHandler';
 import { responseHelpers } from './utils/response';
 import apiRoutes from './routes';
+import { swaggerSpec } from './config/swagger';
 
 const app: Application = express();
 const PORT: number = parseInt(process.env.PORT || '3000');
@@ -58,6 +60,19 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // 응답 헬퍼 미들웨어 추가
 app.use(responseHelpers);
 
+// Swagger UI 설정
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'ChessSudoku API Documentation'
+}));
+
+// Swagger JSON 엔드포인트
+app.get('/api-docs.json', (req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+});
+
 // 기본 라우트
 app.get('/', (req: Request, res: Response) => {
     (res as any).success({
@@ -83,9 +98,14 @@ app.use(errorHandler);
 // 서버 시작 함수
 const startServer = async (): Promise<void> => {
     try {
-        // 데이터베이스 연결 테스트
+        // 데이터베이스 연결 테스트 (선택적)
         console.log('🔌 데이터베이스 연결을 테스트합니다...');
-        await testConnection();
+        const dbConnected = await testConnection();
+        
+        if (!dbConnected) {
+            console.log('⚠️  데이터베이스 연결 실패 - API 문서화 모드로 실행됩니다');
+            console.log('💡 PostgreSQL을 설치하고 설정하면 전체 기능을 사용할 수 있습니다');
+        }
         
         // 서버 시작
         const server = app.listen(PORT, () => {
@@ -94,6 +114,8 @@ const startServer = async (): Promise<void> => {
             console.log('🎉 ========================================');
             console.log(`📍 서버 주소: http://localhost:${PORT}`);
             console.log(`🔍 API 상태: http://localhost:${PORT}/api/health`);
+            console.log(`📚 API 문서: http://localhost:${PORT}/api-docs`);
+            console.log(`📄 Swagger JSON: http://localhost:${PORT}/api-docs.json`);
             console.log(`🌍 환경: ${process.env.NODE_ENV || 'development'}`);
             console.log(`📝 TypeScript: ✅ 활성화`);
             console.log(`🕐 시작 시간: ${new Date().toISOString()}`);
