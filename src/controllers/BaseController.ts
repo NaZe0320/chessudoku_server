@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { BaseService, DatabaseRecord, PaginationOptions } from '../services/BaseService';
 import { QueryConditions } from '../repositories/BaseRepository';
+import { BaseResponse } from '../types/responses/BaseResponse';
 
 export interface PaginationParams {
     page: number;
@@ -35,6 +36,7 @@ export interface ApiError {
 
 /**
  * 모든 Controller가 상속받는 기본 Controller 클래스
+ * Java 패턴 기반 응답 시스템 사용
  */
 export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> {
     protected service: BaseService<T>;
@@ -116,6 +118,31 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
         const message = error instanceof Error ? error.message : error;
         const statusCode = this.getErrorStatusCode(message);
         this.sendError(res, error, statusCode);
+    }
+
+    /**
+     * Java 패턴 기반 에러 처리 헬퍼
+     */
+    protected handleError(res: Response, error: Error): void {
+        console.error('Controller Error:', error);
+        
+        // 에러 메시지에 따른 응답 결정
+        if (error.message.includes('찾을 수 없습니다') || error.message.includes('존재하지')) {
+            res.status(404).json(new BaseResponse.NotFound(error.message));
+        } else if (error.message.includes('필수') || 
+                   error.message.includes('유효하지 않은') || 
+                   error.message.includes('형식') ||
+                   error.message.includes('조건')) {
+            res.status(400).json(new BaseResponse.BadRequest(error.message));
+        } else if (error.message.includes('인증') || error.message.includes('권한')) {
+            res.status(401).json(new BaseResponse.Unauthorized(error.message));
+        } else if (error.message.includes('접근') || error.message.includes('금지')) {
+            res.status(403).json(new BaseResponse.Forbidden(error.message));
+        } else if (error.message.includes('이미') || error.message.includes('중복')) {
+            res.status(409).json(new BaseResponse.Conflict(error.message));
+        } else {
+            res.status(500).json(new BaseResponse.InternalServerError(error.message));
+        }
     }
 
     /**

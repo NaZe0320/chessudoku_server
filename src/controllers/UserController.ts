@@ -2,9 +2,11 @@ import { Request, Response } from 'express';
 import { BaseController } from './BaseController';
 import { UserService } from '../services/UserService';
 import { User } from '../models/User';
+import { UserResponse } from '../types/responses/UserResponse';
 
 /**
  * 사용자 관리 컨트롤러
+ * Java 패턴 기반 응답 시스템 사용
  */
 export class UserController extends BaseController<User> {
     private userService: UserService;
@@ -16,6 +18,8 @@ export class UserController extends BaseController<User> {
         // 메서드 바인딩
         this.register = this.register.bind(this);
         this.getByDeviceId = this.getByDeviceId.bind(this);
+        this.getById = this.getById.bind(this);
+        this.deleteUser = this.deleteUser.bind(this);
     }
 
     /**
@@ -27,13 +31,14 @@ export class UserController extends BaseController<User> {
             const { device_id } = req.body;
 
             if (!device_id) {
-                return this.sendError(res, '디바이스 ID는 필수입니다', 400);
+                res.status(400).json(new UserResponse.DeviceIdRequired());
+                return;
             }
 
             const result = await this.userService.registerUser({ device_id });
-            this.sendSuccess(res, result, '사용자가 성공적으로 등록되었습니다', 201);
+            res.status(201).json(new UserResponse.RegisterUserCreated(result));
         } catch (error) {
-            this.sendErrorAuto(res, error as Error);
+            this.handleError(res, error as Error);
         }
     }
 
@@ -48,15 +53,35 @@ export class UserController extends BaseController<User> {
             const user = await this.userService.getUserByDeviceId(device_id);
 
             if (!user) {
-                return this.sendError(res, '사용자를 찾을 수 없습니다', 404);
+                res.status(404).json(new UserResponse.UserNotFound());
+                return;
             }
 
-            this.sendSuccess(res, user, '사용자 정보 조회 성공');
+            res.status(200).json(new UserResponse.GetUserByDeviceIdOK(user));
         } catch (error) {
-            this.sendErrorAuto(res, error as Error);
+            this.handleError(res, error as Error);
         }
     }
 
+    /**
+     * 사용자 ID로 조회
+     * GET /api/user/:id
+     */
+    override async getById(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const user = await this.userService.getUserById(id);
+
+            if (!user) {
+                res.status(404).json(new UserResponse.UserNotFound());
+                return;
+            }
+
+            res.status(200).json(new UserResponse.GetUserByIdOK(user));
+        } catch (error) {
+            this.handleError(res, error as Error);
+        }
+    }
 
     /**
      * 사용자 삭제
@@ -69,44 +94,33 @@ export class UserController extends BaseController<User> {
             const deleted = await this.userService.deleteUser(user_id);
 
             if (deleted) {
-                this.sendSuccess(res, null, '사용자가 성공적으로 삭제되었습니다');
+                res.status(200).json(new UserResponse.DeleteUserOK());
             } else {
-                return this.sendError(res, '사용자를 찾을 수 없습니다', 404);
+                res.status(404).json(new UserResponse.UserNotFound());
             }
         } catch (error) {
-            this.sendErrorAuto(res, error as Error);
+            this.handleError(res, error as Error);
         }
     }
 
     /**
-     * BaseController 메서드 오버라이드
+     * create 메서드 (register로 대체)
      */
-    override async getById(req: Request, res: Response): Promise<void> {
-        try {
-            const { id } = req.params;
-            const user = await this.userService.getUserById(id);
-
-            if (!user) {
-                return this.sendError(res, '사용자를 찾을 수 없습니다', 404);
-            }
-
-            this.sendSuccess(res, user, '사용자 정보 조회 성공');
-        } catch (error) {
-            this.sendErrorAuto(res, error as Error);
-        }
-    }
-
     override async create(req: Request, res: Response): Promise<void> {
-        // register로 대체
         await this.register(req, res);
     }
 
+    /**
+     * update 메서드 (금지됨)
+     */
     override async update(req: Request, res: Response): Promise<void> {
-        this.sendError(res, '사용자 정보는 수정할 수 없습니다', 403);
+        res.status(403).json(new UserResponse.UserUpdateForbidden());
     }
 
+    /**
+     * delete 메서드 (deleteUser로 대체)
+     */
     override async delete(req: Request, res: Response): Promise<void> {
-        // deleteUser로 대체
         await this.deleteUser(req, res);
     }
 }

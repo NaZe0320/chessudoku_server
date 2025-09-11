@@ -2,8 +2,7 @@ import express, { Router } from 'express';
 import { UserController } from '../controllers/UserController';
 import { UserService } from '../services/UserService';
 import { UserRepository } from '../repositories/UserRepository';
-import { validateRequiredFields, validateIdParam } from '../middlewares/validator';
-import { asyncHandler, asyncHandlerWithStatus, getErrorStatusCode } from '../middlewares/asyncHandler';
+import { validateRequiredFields } from '../middlewares/validator';
 
 // 의존성 주입
 const userRepository = new UserRepository();
@@ -71,8 +70,6 @@ const router: Router = express.Router();
  */
 router.post('/register',
     validateRequiredFields(['device_id']),
-    // asyncHandler 사용 예시 (선택사항)
-    // asyncHandler(userController, 'register')
     userController.register
 );
 
