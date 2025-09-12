@@ -8,6 +8,7 @@ dotenv.config();
 // Layered Architecture 모듈들 import
 import { testConnection, closeDatabase } from './config/database';
 import errorHandler from './middlewares/errorHandler';
+import { responseHandler } from './middlewares/responseHandler';
 import { responseHelpers } from './utils/response';
 import apiRoutes from './routes';
 import { swaggerSpec } from './config/swagger';
@@ -59,6 +60,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // 응답 헬퍼 미들웨어 추가
 app.use(responseHelpers);
+
+// 자동 상태 코드 처리 미들웨어 추가
+app.use(responseHandler);
 
 // Swagger UI 설정
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {

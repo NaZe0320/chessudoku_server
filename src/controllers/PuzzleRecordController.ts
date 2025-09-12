@@ -23,18 +23,16 @@ export class PuzzleRecordController extends BaseController<PuzzleRecord> {
      * 퍼즐 기록 추가
      * POST /api/puzzle-record
      */
-    async addRecord(req: Request, res: Response): Promise<void> {
+    async addRecord(req: Request, res: Response): Promise<Response> {
         try {
             const { user_id, puzzle_id, puzzle_type, solve_time, hints_used } = req.body;
 
             if (!user_id || !puzzle_id || !puzzle_type || solve_time === undefined || hints_used === undefined) {
-                res.status(400).json(new PuzzleRecordResponse.PuzzleRecordDataRequired());
-                return;
+                return res.json(new PuzzleRecordResponse.PuzzleRecordDataRequired());
             }
 
             if (solve_time <= 0) {
-                res.status(400).json(new PuzzleRecordResponse.InvalidSolveTime());
-                return;
+                return res.json(new PuzzleRecordResponse.InvalidSolveTime());
             }
 
             const recordData = {
@@ -47,9 +45,9 @@ export class PuzzleRecordController extends BaseController<PuzzleRecord> {
             };
 
             const record = await this.puzzleRecordService.addRecord(recordData);
-            res.status(201).json(new PuzzleRecordResponse.CreatePuzzleRecordCreated(record));
+            return res.json(new PuzzleRecordResponse.CreatePuzzleRecordCreated(record));
         } catch (error) {
-            this.handleError(res, error as Error);
+            return this.handleError(res, error as Error);
         }
     }
 
@@ -57,37 +55,37 @@ export class PuzzleRecordController extends BaseController<PuzzleRecord> {
      * 퍼즐 기록 목록 조회 (금지됨)
      * GET /api/puzzle-record
      */
-    override async getAll(req: Request, res: Response): Promise<void> {
-        res.status(403).json(new PuzzleRecordResponse.PuzzleRecordGetAllForbidden());
+    override async getAll(req: Request, res: Response): Promise<Response> {
+        return res.json(new PuzzleRecordResponse.PuzzleRecordGetAllForbidden());
     }
 
     /**
      * 퍼즐 기록 ID로 조회 (금지됨)
      * GET /api/puzzle-record/:id
      */
-    override async getById(req: Request, res: Response): Promise<void> {
-        res.status(403).json(new PuzzleRecordResponse.PuzzleRecordGetByIdForbidden());
+    override async getById(req: Request, res: Response): Promise<Response> {
+        return res.json(new PuzzleRecordResponse.PuzzleRecordGetByIdForbidden());
     }
 
     /**
      * create 메서드 (addRecord로 대체)
      */
-    override async create(req: Request, res: Response): Promise<void> {
-        await this.addRecord(req, res);
+    override async create(req: Request, res: Response): Promise<Response> {
+        return await this.addRecord(req, res);
     }
 
     /**
      * update 메서드 (금지됨)
      */
-    override async update(req: Request, res: Response): Promise<void> {
-        res.status(403).json(new PuzzleRecordResponse.PuzzleRecordUpdateForbidden());
+    override async update(req: Request, res: Response): Promise<Response> {
+        return res.json(new PuzzleRecordResponse.PuzzleRecordUpdateForbidden());
     }
 
     /**
      * delete 메서드 (금지됨)
      */
-    override async delete(req: Request, res: Response): Promise<void> {
-        res.status(403).json(new PuzzleRecordResponse.PuzzleRecordDeleteForbidden());
+    override async delete(req: Request, res: Response): Promise<Response> {
+        return res.json(new PuzzleRecordResponse.PuzzleRecordDeleteForbidden());
     }
 }
 

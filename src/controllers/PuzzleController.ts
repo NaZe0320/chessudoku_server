@@ -26,7 +26,7 @@ export class PuzzleController extends BaseController<Puzzle> {
      * 조건에 맞는 랜덤 퍼즐 조회
      * GET /api/puzzle/random
      */
-    async getRandomPuzzle(req: Request, res: Response): Promise<void> {
+    async getRandomPuzzle(req: Request, res: Response): Promise<Response> {
         try {
             const { puzzle_type, difficulty } = req.query;
 
@@ -36,13 +36,12 @@ export class PuzzleController extends BaseController<Puzzle> {
             );
 
             if (!puzzle) {
-                res.status(404).json(new PuzzleResponse.PuzzleNotFound());
-                return;
+                return res.json(new PuzzleResponse.PuzzleNotFound());
             }
 
-            res.status(200).json(new PuzzleResponse.GetRandomPuzzleOK(puzzle));
+            return res.json(new PuzzleResponse.GetRandomPuzzleOK(puzzle));
         } catch (error) {
-            this.handleError(res, error as Error);
+            return this.handleError(res, error as Error);
         }
     }
 
@@ -50,26 +49,24 @@ export class PuzzleController extends BaseController<Puzzle> {
      * 데일리 퍼즐 조회
      * GET /api/puzzle/daily
      */
-    async getDailyPuzzle(req: Request, res: Response): Promise<void> {
+    async getDailyPuzzle(req: Request, res: Response): Promise<Response> {
         try {
             const { date } = req.query;
             
             const targetDate = date ? new Date(date as string) : new Date();
             if (isNaN(targetDate.getTime())) {
-                res.status(400).json(new PuzzleResponse.InvalidDateFormat());
-                return;
+                return res.json(new PuzzleResponse.InvalidDateFormat());
             }
 
             const puzzle = await this.puzzleService.getDailyPuzzle(targetDate);
 
             if (!puzzle) {
-                res.status(404).json(new PuzzleResponse.DailyPuzzleNotFound());
-                return;
+                return res.json(new PuzzleResponse.DailyPuzzleNotFound());
             }
 
-            res.status(200).json(new PuzzleResponse.GetDailyPuzzleOK(puzzle));
+            return res.json(new PuzzleResponse.GetDailyPuzzleOK(puzzle));
         } catch (error) {
-            this.handleError(res, error as Error);
+            return this.handleError(res, error as Error);
         }
     }
 
@@ -77,13 +74,12 @@ export class PuzzleController extends BaseController<Puzzle> {
      * 퍼즐 생성 (관리자용)
      * POST /api/puzzle
      */
-    async createPuzzle(req: Request, res: Response): Promise<void> {
+    async createPuzzle(req: Request, res: Response): Promise<Response> {
         try {
             const { puzzle_type, difficulty, puzzle_data, answer_data, daily_date } = req.body;
 
             if (!puzzle_type || !difficulty || !puzzle_data || !answer_data) {
-                res.status(400).json(new PuzzleResponse.PuzzleDataRequired());
-                return;
+                return res.json(new PuzzleResponse.PuzzleDataRequired());
             }
 
             const puzzleData = {
@@ -95,9 +91,9 @@ export class PuzzleController extends BaseController<Puzzle> {
             };
 
             const puzzle = await this.puzzleService.createPuzzle(puzzleData);
-            res.status(201).json(new PuzzleResponse.CreatePuzzleCreated(puzzle));
+            return res.json(new PuzzleResponse.CreatePuzzleCreated(puzzle));
         } catch (error) {
-            this.handleError(res, error as Error);
+            return this.handleError(res, error as Error);
         }
     }
 
@@ -105,25 +101,24 @@ export class PuzzleController extends BaseController<Puzzle> {
      * 퍼즐 삭제 (관리자용)
      * DELETE /api/puzzle/:puzzle_id
      */
-    async deletePuzzle(req: Request, res: Response): Promise<void> {
+    async deletePuzzle(req: Request, res: Response): Promise<Response> {
         try {
             const { puzzle_id } = req.params;
 
             const puzzleIdNum = parseInt(puzzle_id);
             if (isNaN(puzzleIdNum)) {
-                res.status(400).json(new PuzzleResponse.InvalidPuzzleId());
-                return;
+                return res.json(new PuzzleResponse.InvalidPuzzleId());
             }
 
             const deleted = await this.puzzleService.deletePuzzle(puzzleIdNum);
 
             if (deleted) {
-                res.status(200).json(new PuzzleResponse.DeletePuzzleOK());
+                return res.json(new PuzzleResponse.DeletePuzzleOK());
             } else {
-                res.status(404).json(new PuzzleResponse.PuzzleNotFound());
+                return res.json(new PuzzleResponse.PuzzleNotFound());
             }
         } catch (error) {
-            this.handleError(res, error as Error);
+            return this.handleError(res, error as Error);
         }
     }
 
@@ -131,30 +126,30 @@ export class PuzzleController extends BaseController<Puzzle> {
      * 퍼즐 목록 조회 (금지됨)
      * GET /api/puzzle
      */
-    override async getAll(req: Request, res: Response): Promise<void> {
-        res.status(403).json(new PuzzleResponse.GetAllPuzzlesForbidden());
+    override async getAll(req: Request, res: Response): Promise<Response> {
+        return res.json(new PuzzleResponse.GetAllPuzzlesForbidden());
     }
 
     /**
      * 퍼즐 ID로 조회 (금지됨)
      * GET /api/puzzle/:id
      */
-    override async getById(req: Request, res: Response): Promise<void> {
-        res.status(403).json(new PuzzleResponse.GetPuzzleByIdForbidden());
+    override async getById(req: Request, res: Response): Promise<Response> {
+        return res.json(new PuzzleResponse.GetPuzzleByIdForbidden());
     }
 
     /**
      * create 메서드 (createPuzzle으로 대체)
      */
-    override async create(req: Request, res: Response): Promise<void> {
-        await this.createPuzzle(req, res);
+    override async create(req: Request, res: Response): Promise<Response> {
+        return await this.createPuzzle(req, res);
     }
 
     /**
      * delete 메서드 (deletePuzzle으로 대체)
      */
-    override async delete(req: Request, res: Response): Promise<void> {
-        await this.deletePuzzle(req, res);
+    override async delete(req: Request, res: Response): Promise<Response> {
+        return await this.deletePuzzle(req, res);
     }
 }
 

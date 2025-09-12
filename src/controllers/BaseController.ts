@@ -65,7 +65,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
         message: string = '성공', 
         statusCode: number = 200,
         meta?: any
-    ): void {
+    ): Response {
         const response: ApiResponse<D> = {
             success: true,
             message,
@@ -77,7 +77,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             response.meta = meta;
         }
 
-        res.status(statusCode).json(response);
+        return res.status(statusCode).json(response);
     }
 
     /**
@@ -87,7 +87,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
         res: Response, 
         error: Error | string, 
         statusCode: number = 500
-    ): void {
+    ): Response {
         const message = error instanceof Error ? error.message : error;
         
         console.error(`Controller Error [${statusCode}]:`, message);
@@ -105,7 +105,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             };
         }
 
-        res.status(statusCode).json(response);
+        return res.status(statusCode).json(response);
     }
 
     /**
@@ -114,34 +114,34 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
     protected sendErrorAuto(
         res: Response, 
         error: Error | string
-    ): void {
+    ): Response {
         const message = error instanceof Error ? error.message : error;
         const statusCode = this.getErrorStatusCode(message);
-        this.sendError(res, error, statusCode);
+        return this.sendError(res, error, statusCode);
     }
 
     /**
      * Java 패턴 기반 에러 처리 헬퍼
      */
-    protected handleError(res: Response, error: Error): void {
+    protected handleError(res: Response, error: Error): Response {
         console.error('Controller Error:', error);
         
         // 에러 메시지에 따른 응답 결정
         if (error.message.includes('찾을 수 없습니다') || error.message.includes('존재하지')) {
-            res.status(404).json(new BaseResponse.NotFound(error.message));
+            return res.json(new BaseResponse.NotFound(error.message));
         } else if (error.message.includes('필수') || 
                    error.message.includes('유효하지 않은') || 
                    error.message.includes('형식') ||
                    error.message.includes('조건')) {
-            res.status(400).json(new BaseResponse.BadRequest(error.message));
+            return res.json(new BaseResponse.BadRequest(error.message));
         } else if (error.message.includes('인증') || error.message.includes('권한')) {
-            res.status(401).json(new BaseResponse.Unauthorized(error.message));
+            return res.json(new BaseResponse.Unauthorized(error.message));
         } else if (error.message.includes('접근') || error.message.includes('금지')) {
-            res.status(403).json(new BaseResponse.Forbidden(error.message));
+            return res.json(new BaseResponse.Forbidden(error.message));
         } else if (error.message.includes('이미') || error.message.includes('중복')) {
-            res.status(409).json(new BaseResponse.Conflict(error.message));
+            return res.json(new BaseResponse.Conflict(error.message));
         } else {
-            res.status(500).json(new BaseResponse.InternalServerError(error.message));
+            return res.json(new BaseResponse.InternalServerError(error.message));
         }
     }
 
@@ -203,12 +203,12 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
      * 모든 레코드 조회
      * GET /api/resource
      */
-    async getAll(req: Request, res: Response): Promise<void> {
+    async getAll(req: Request, res: Response): Promise<Response> {
         try {
             const data = await this.service.getAll();
-            this.sendSuccess(res, data, '데이터 조회 성공');
+            return this.sendSuccess(res, data, '데이터 조회 성공');
         } catch (error) {
-            this.sendErrorAuto(res, error as Error);
+            return this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -216,7 +216,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
      * 페이지네이션을 포함한 레코드 조회
      * GET /api/resource/paginated
      */
-    async getPaginated(req: Request, res: Response): Promise<void> {
+    async getPaginated(req: Request, res: Response): Promise<Response> {
         try {
             const paginationParams = this.getPaginationParams(req);
             const sortParams = this.getSortParams(req);
@@ -234,7 +234,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
 
             const result = await this.service.getPaginated(options, conditions);
             
-            this.sendSuccess(
+            return this.sendSuccess(
                 res, 
                 result.items, 
                 '페이지네이션 조회 성공',
@@ -251,7 +251,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
                 }
             );
         } catch (error) {
-            this.sendErrorAuto(res, error as Error);
+            return this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -259,7 +259,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
      * ID로 레코드 조회
      * GET /api/resource/:id
      */
-    async getById(req: Request, res: Response): Promise<void> {
+    async getById(req: Request, res: Response): Promise<Response> {
         try {
             const { id } = req.params;
             
@@ -268,10 +268,10 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             }
 
             const data = await this.service.getById(id);
-            this.sendSuccess(res, data, '데이터 조회 성공');
+            return this.sendSuccess(res, data, '데이터 조회 성공');
         } catch (error) {
             const statusCode = (error as Error).message === '데이터를 찾을 수 없습니다' ? 404 : 500;
-            this.sendError(res, error as Error, statusCode);
+            return this.sendError(res, error as Error, statusCode);
         }
     }
 
@@ -279,7 +279,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
      * 새 레코드 생성
      * POST /api/resource
      */
-    async create(req: Request, res: Response): Promise<void> {
+    async create(req: Request, res: Response): Promise<Response> {
         try {
             const data = req.body;
             
@@ -295,10 +295,10 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             // 생성 후 데이터 처리 (하위 클래스에서 오버라이드 가능)
             const finalResult = await this.afterCreate(result, req);
 
-            this.sendSuccess(res, finalResult, '데이터 생성 성공', 201);
+            return this.sendSuccess(res, finalResult, '데이터 생성 성공', 201);
         } catch (error) {
             const statusCode = this.getValidationErrorStatusCode(error as Error);
-            this.sendError(res, error as Error, statusCode);
+            return this.sendError(res, error as Error, statusCode);
         }
     }
 
@@ -306,7 +306,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
      * 레코드 업데이트
      * PUT /api/resource/:id
      */
-    async update(req: Request, res: Response): Promise<void> {
+    async update(req: Request, res: Response): Promise<Response> {
         try {
             const { id } = req.params;
             const data = req.body;
@@ -327,7 +327,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             // 업데이트 후 데이터 처리 (하위 클래스에서 오버라이드 가능)
             const finalResult = await this.afterUpdate(result, req);
 
-            this.sendSuccess(res, finalResult, '데이터 업데이트 성공');
+            return this.sendSuccess(res, finalResult, '데이터 업데이트 성공');
         } catch (error) {
             let statusCode = 500;
             const message = (error as Error).message;
@@ -338,7 +338,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
                 statusCode = 400;
             }
             
-            this.sendError(res, error as Error, statusCode);
+            return this.sendError(res, error as Error, statusCode);
         }
     }
 
@@ -346,7 +346,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
      * 레코드 삭제
      * DELETE /api/resource/:id
      */
-    async delete(req: Request, res: Response): Promise<void> {
+    async delete(req: Request, res: Response): Promise<Response> {
         try {
             const { id } = req.params;
             
@@ -362,13 +362,13 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
             if (result) {
                 // 삭제 후 처리 (하위 클래스에서 오버라이드 가능)
                 await this.afterDelete(id, req);
-                this.sendSuccess(res, null, '데이터 삭제 성공');
+                return this.sendSuccess(res, null, '데이터 삭제 성공');
             } else {
-                this.sendError(res, '삭제 실패', 500);
+                return this.sendError(res, '삭제 실패', 500);
             }
         } catch (error) {
             const statusCode = (error as Error).message === '데이터를 찾을 수 없습니다' ? 404 : 500;
-            this.sendError(res, error as Error, statusCode);
+            return this.sendError(res, error as Error, statusCode);
         }
     }
 
@@ -376,7 +376,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
      * 조건으로 레코드 삭제
      * DELETE /api/resource
      */
-    async deleteBy(req: Request, res: Response): Promise<void> {
+    async deleteBy(req: Request, res: Response): Promise<Response> {
         try {
             const conditions = req.body;
             
@@ -386,9 +386,9 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
 
             const deletedCount = await this.service.deleteBy(conditions);
             
-            this.sendSuccess(res, { deletedCount }, `${deletedCount}개의 데이터가 삭제되었습니다`);
+            return this.sendSuccess(res, { deletedCount }, `${deletedCount}개의 데이터가 삭제되었습니다`);
         } catch (error) {
-            this.sendErrorAuto(res, error as Error);
+            return this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -396,14 +396,14 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
      * 레코드 개수 조회
      * GET /api/resource/count
      */
-    async count(req: Request, res: Response): Promise<void> {
+    async count(req: Request, res: Response): Promise<Response> {
         try {
             const conditions = req.query as QueryConditions;
             const count = await this.service.count(conditions);
             
-            this.sendSuccess(res, { count }, '개수 조회 성공');
+            return this.sendSuccess(res, { count }, '개수 조회 성공');
         } catch (error) {
-            this.sendErrorAuto(res, error as Error);
+            return this.sendErrorAuto(res, error as Error);
         }
     }
 
@@ -411,7 +411,7 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
      * 레코드 존재 여부 확인
      * GET /api/resource/exists
      */
-    async exists(req: Request, res: Response): Promise<void> {
+    async exists(req: Request, res: Response): Promise<Response> {
         try {
             const conditions = req.query as QueryConditions;
             
@@ -421,9 +421,9 @@ export abstract class BaseController<T extends DatabaseRecord = DatabaseRecord> 
 
             const exists = await this.service.exists(conditions);
             
-            this.sendSuccess(res, { exists }, '존재 여부 확인 성공');
+            return this.sendSuccess(res, { exists }, '존재 여부 확인 성공');
         } catch (error) {
-            this.sendErrorAuto(res, error as Error);
+            return this.sendErrorAuto(res, error as Error);
         }
     }
 
