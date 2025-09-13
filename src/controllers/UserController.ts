@@ -3,6 +3,7 @@ import { BaseController } from './BaseController';
 import { UserService } from '../services/UserService';
 import { User } from '../models/User';
 import { UserResponse } from '../types/responses/UserResponse';
+import { BaseResponse } from '../types/responses/BaseResponse';
 
 /**
  * 사용자 관리 컨트롤러
@@ -14,12 +15,6 @@ export class UserController extends BaseController<User> {
     constructor(userService: UserService) {
         super(userService);
         this.userService = userService;
-
-        // 메서드 바인딩
-        this.register = this.register.bind(this);
-        this.getByDeviceId = this.getByDeviceId.bind(this);
-        this.getById = this.getById.bind(this);
-        this.deleteUser = this.deleteUser.bind(this);
     }
 
     /**
@@ -37,7 +32,7 @@ export class UserController extends BaseController<User> {
             const result = await this.userService.registerUser({ device_id });
             return res.json(new UserResponse.RegisterUserCreated(result));
         } catch (error) {
-            return this.handleError(res, error as Error);
+            return res.json(new BaseResponse.InternalServerError((error as Error).message));
         }
     }
 
@@ -57,7 +52,7 @@ export class UserController extends BaseController<User> {
 
             return res.json(new UserResponse.GetUserByDeviceIdOK(user));
         } catch (error) {
-            return this.handleError(res, error as Error);
+            return res.json(new BaseResponse.InternalServerError((error as Error).message));
         }
     }
 
@@ -76,7 +71,7 @@ export class UserController extends BaseController<User> {
 
             return res.json(new UserResponse.GetUserByIdOK(user));
         } catch (error) {
-            return this.handleError(res, error as Error);
+            return res.json(new BaseResponse.InternalServerError((error as Error).message));
         }
     }
 
@@ -96,28 +91,28 @@ export class UserController extends BaseController<User> {
                 return res.json(new UserResponse.UserNotFound());
             }
         } catch (error) {
-            return this.handleError(res, error as Error);
+            return res.json(new BaseResponse.InternalServerError((error as Error).message));
         }
     }
 
     /**
      * create 메서드 (register로 대체)
      */
-    override async create(req: Request, res: Response): Promise<Response> {
+    async create(req: Request, res: Response): Promise<Response> {
         return await this.register(req, res);
     }
 
     /**
      * update 메서드 (금지됨)
      */
-    override async update(req: Request, res: Response): Promise<Response> {
+    async update(req: Request, res: Response): Promise<Response> {
         return res.json(new UserResponse.UserUpdateForbidden());
     }
 
     /**
      * delete 메서드 (deleteUser로 대체)
      */
-    override async delete(req: Request, res: Response): Promise<Response> {
+    async delete(req: Request, res: Response): Promise<Response> {
         return await this.deleteUser(req, res);
     }
 }

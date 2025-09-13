@@ -3,6 +3,7 @@ import { BaseController } from './BaseController';
 import { PuzzleRecordService } from '../services/PuzzleRecordService';
 import { PuzzleRecord } from '../models/PuzzleRecord';
 import { PuzzleRecordResponse } from '../types/responses/PuzzleRecordResponse';
+import { BaseResponse } from '../types/responses/BaseResponse';
 
 /**
  * 퍼즐 기록 관리 컨트롤러
@@ -14,9 +15,6 @@ export class PuzzleRecordController extends BaseController<PuzzleRecord> {
     constructor(puzzleRecordService: PuzzleRecordService) {
         super(puzzleRecordService);
         this.puzzleRecordService = puzzleRecordService;
-
-        // 메서드 바인딩
-        this.addRecord = this.addRecord.bind(this);
     }
 
     /**
@@ -47,44 +45,28 @@ export class PuzzleRecordController extends BaseController<PuzzleRecord> {
             const record = await this.puzzleRecordService.addRecord(recordData);
             return res.json(new PuzzleRecordResponse.CreatePuzzleRecordCreated(record));
         } catch (error) {
-            return this.handleError(res, error as Error);
+            return res.json(new BaseResponse.InternalServerError((error as Error).message));
         }
-    }
-
-    /**
-     * 퍼즐 기록 목록 조회 (금지됨)
-     * GET /api/puzzle-record
-     */
-    override async getAll(req: Request, res: Response): Promise<Response> {
-        return res.json(new PuzzleRecordResponse.PuzzleRecordGetAllForbidden());
-    }
-
-    /**
-     * 퍼즐 기록 ID로 조회 (금지됨)
-     * GET /api/puzzle-record/:id
-     */
-    override async getById(req: Request, res: Response): Promise<Response> {
-        return res.json(new PuzzleRecordResponse.PuzzleRecordGetByIdForbidden());
     }
 
     /**
      * create 메서드 (addRecord로 대체)
      */
-    override async create(req: Request, res: Response): Promise<Response> {
+    async create(req: Request, res: Response): Promise<Response> {
         return await this.addRecord(req, res);
     }
 
     /**
      * update 메서드 (금지됨)
      */
-    override async update(req: Request, res: Response): Promise<Response> {
+    async update(req: Request, res: Response): Promise<Response> {
         return res.json(new PuzzleRecordResponse.PuzzleRecordUpdateForbidden());
     }
 
     /**
      * delete 메서드 (금지됨)
      */
-    override async delete(req: Request, res: Response): Promise<Response> {
+    async delete(req: Request, res: Response): Promise<Response> {
         return res.json(new PuzzleRecordResponse.PuzzleRecordDeleteForbidden());
     }
 }

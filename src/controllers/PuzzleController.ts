@@ -3,6 +3,7 @@ import { BaseController } from './BaseController';
 import { PuzzleService } from '../services/PuzzleService';
 import { Puzzle } from '../models/Puzzle';
 import { PuzzleResponse } from '../types/responses/PuzzleResponse';
+import { BaseResponse } from '../types/responses/BaseResponse';
 
 /**
  * 퍼즐 관리 컨트롤러
@@ -14,12 +15,6 @@ export class PuzzleController extends BaseController<Puzzle> {
     constructor(puzzleService: PuzzleService) {
         super(puzzleService);
         this.puzzleService = puzzleService;
-
-        // 메서드 바인딩
-        this.getRandomPuzzle = this.getRandomPuzzle.bind(this);
-        this.getDailyPuzzle = this.getDailyPuzzle.bind(this);
-        this.createPuzzle = this.createPuzzle.bind(this);
-        this.deletePuzzle = this.deletePuzzle.bind(this);
     }
 
     /**
@@ -41,7 +36,7 @@ export class PuzzleController extends BaseController<Puzzle> {
 
             return res.json(new PuzzleResponse.GetRandomPuzzleOK(puzzle));
         } catch (error) {
-            return this.handleError(res, error as Error);
+            return res.json(new BaseResponse.InternalServerError((error as Error).message));
         }
     }
 
@@ -66,7 +61,7 @@ export class PuzzleController extends BaseController<Puzzle> {
 
             return res.json(new PuzzleResponse.GetDailyPuzzleOK(puzzle));
         } catch (error) {
-            return this.handleError(res, error as Error);
+            return res.json(new BaseResponse.InternalServerError((error as Error).message));
         }
     }
 
@@ -93,7 +88,7 @@ export class PuzzleController extends BaseController<Puzzle> {
             const puzzle = await this.puzzleService.createPuzzle(puzzleData);
             return res.json(new PuzzleResponse.CreatePuzzleCreated(puzzle));
         } catch (error) {
-            return this.handleError(res, error as Error);
+            return res.json(new BaseResponse.InternalServerError((error as Error).message));
         }
     }
 
@@ -118,37 +113,28 @@ export class PuzzleController extends BaseController<Puzzle> {
                 return res.json(new PuzzleResponse.PuzzleNotFound());
             }
         } catch (error) {
-            return this.handleError(res, error as Error);
+            return res.json(new BaseResponse.InternalServerError((error as Error).message));
         }
-    }
-
-    /**
-     * 퍼즐 목록 조회 (금지됨)
-     * GET /api/puzzle
-     */
-    override async getAll(req: Request, res: Response): Promise<Response> {
-        return res.json(new PuzzleResponse.GetAllPuzzlesForbidden());
-    }
-
-    /**
-     * 퍼즐 ID로 조회 (금지됨)
-     * GET /api/puzzle/:id
-     */
-    override async getById(req: Request, res: Response): Promise<Response> {
-        return res.json(new PuzzleResponse.GetPuzzleByIdForbidden());
     }
 
     /**
      * create 메서드 (createPuzzle으로 대체)
      */
-    override async create(req: Request, res: Response): Promise<Response> {
+    async create(req: Request, res: Response): Promise<Response> {
         return await this.createPuzzle(req, res);
+    }
+
+    /**
+     * update 메서드 (금지됨)
+     */
+    async update(req: Request, res: Response): Promise<Response> {
+        return res.json(new PuzzleResponse.GetAllPuzzlesForbidden());
     }
 
     /**
      * delete 메서드 (deletePuzzle으로 대체)
      */
-    override async delete(req: Request, res: Response): Promise<Response> {
+    async delete(req: Request, res: Response): Promise<Response> {
         return await this.deletePuzzle(req, res);
     }
 }
