@@ -71,8 +71,15 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
     async findBy(conditions: QueryConditions): Promise<T[]> {
         const keys = Object.keys(conditions);
         const values = Object.values(conditions);
-        const whereClause = keys.map((key, index) => `${key} = $${index + 1}`).join(' AND ');
         
+        // 조건이 없으면 모든 레코드 조회
+        if (keys.length === 0) {
+            const query = `SELECT * FROM "${this.tableName}"`;
+            const result = await this.execute(query);
+            return result.rows;
+        }
+        
+        const whereClause = keys.map((key, index) => `${key} = $${index + 1}`).join(' AND ');
         const query = `SELECT * FROM "${this.tableName}" WHERE ${whereClause}`;
         const result = await this.execute(query, values);
         return result.rows;
@@ -96,7 +103,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
         const columns = keys.join(', ');
 
         const query = `
-            INSERT INTO ${this.tableName} (${columns}) 
+            INSERT INTO "${this.tableName}" (${columns}) 
             VALUES (${placeholders}) 
             RETURNING *
         `;
@@ -124,7 +131,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
         const values = dataArray.flatMap(row => Object.values(row));
 
         const query = `
-            INSERT INTO ${this.tableName} (${columns}) 
+            INSERT INTO "${this.tableName}" (${columns}) 
             VALUES ${placeholders} 
             RETURNING *
         `;
@@ -142,7 +149,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
         const setClause = keys.map((key, index) => `${key} = $${index + 2}`).join(', ');
 
         const query = `
-            UPDATE ${this.tableName} 
+            UPDATE "${this.tableName}" 
             SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
             WHERE id = $1 
             RETURNING *
@@ -170,7 +177,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
         ).join(', ');
 
         const query = `
-            UPDATE ${this.tableName} 
+            UPDATE "${this.tableName}" 
             SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
             WHERE ${whereClause} 
             RETURNING *

@@ -28,6 +28,28 @@ export class PuzzleRepository extends BaseRepository<Puzzle> {
     }
 
     /**
+     * 새 퍼즐 생성 (puzzle_id 제외)
+     */
+    override async create(data: any): Promise<Puzzle> {
+        // puzzle_id를 제외한 데이터만 사용
+        const { puzzle_id, ...createData } = data;
+        
+        const keys = Object.keys(createData);
+        const values = Object.values(createData);
+        const placeholders = keys.map((_, index) => `$${index + 1}`).join(', ');
+        const columns = keys.join(', ');
+
+        const query = `
+            INSERT INTO "${this.tableName}" (${columns}) 
+            VALUES (${placeholders}) 
+            RETURNING *
+        `;
+        
+        const result = await this.execute(query, values);
+        return result.rows[0];
+    }
+
+    /**
      * 레코드 삭제 (puzzle_id 사용)
      */
     override async delete(id: number | string): Promise<boolean> {
