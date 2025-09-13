@@ -6,15 +6,19 @@ import swaggerUi from 'swagger-ui-express';
 dotenv.config();
 
 // Layered Architecture 모듈들 import
-import { testConnection, closeDatabase } from './config/database';
+import { testConnection, closeDatabase, initializeDatabase } from './config/database';
 import errorHandler from './middlewares/errorHandler';
 import { responseHandler } from './middlewares/responseHandler';
 import { responseHelpers } from './utils/response';
 import apiRoutes from './routes';
 import { swaggerSpec } from './config/swagger';
+import DIContainer from './config/container';
 
 const app: Application = express();
 const PORT: number = parseInt(process.env.PORT || '3000');
+
+// DI 컨테이너 초기화
+const _container = new DIContainer(app);
 
 // 기본 미들웨어 설정
 app.use(express.json({ limit: '10mb' }));
@@ -102,13 +106,21 @@ app.use(errorHandler);
 // 서버 시작 함수
 const startServer = async (): Promise<void> => {
     try {
-        // 데이터베이스 연결 테스트 (선택적)
+        // 데이터베이스 연결 테스트
         console.log('🔌 데이터베이스 연결을 테스트합니다...');
         const dbConnected = await testConnection();
         
         if (!dbConnected) {
             console.log('⚠️  데이터베이스 연결 실패 - API 문서화 모드로 실행됩니다');
             console.log('💡 PostgreSQL을 설치하고 설정하면 전체 기능을 사용할 수 있습니다');
+        } else {
+            // 데이터베이스 스키마 초기화
+            console.log('📊 데이터베이스 스키마를 초기화합니다...');
+            const schemaInitialized = await initializeDatabase();
+            
+            if (!schemaInitialized) {
+                console.log('⚠️  스키마 초기화 실패 - 일부 기능이 제한될 수 있습니다');
+            }
         }
         
         // 서버 시작

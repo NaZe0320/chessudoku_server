@@ -1,15 +1,12 @@
-import express, { Router } from 'express';
-import { PuzzleRecordController } from '../controllers/PuzzleRecordController';
-import { PuzzleRecordService } from '../services/PuzzleRecordService';
-import { PuzzleRecordRepository } from '../repositories/PuzzleRecordRepository';
+import express, { Router, Request, Response } from 'express';
 import { validateRequiredFields } from '../middlewares/validator';
 
-// 의존성 주입
-const puzzleRecordRepository = new PuzzleRecordRepository();
-const puzzleRecordService = new PuzzleRecordService(puzzleRecordRepository);
-const puzzleRecordController = new PuzzleRecordController(puzzleRecordService);
-
 const router: Router = express.Router();
+
+// app.locals에서 컨트롤러 가져오기
+const getPuzzleRecordController = (req: Request) => {
+    return req.app.locals.puzzleRecordController;
+};
 
 /**
  * @swagger
@@ -95,7 +92,10 @@ const router: Router = express.Router();
  */
 router.post('/',
     validateRequiredFields(['user_id', 'puzzle_id', 'puzzle_type', 'solve_time', 'hints_used']),
-    puzzleRecordController.addRecord
+    (req: Request, res: Response) => {
+        const controller = getPuzzleRecordController(req);
+        return controller.addRecord(req, res);
+    }
 );
 
 export default router;

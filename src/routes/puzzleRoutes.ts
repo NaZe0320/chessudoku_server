@@ -1,15 +1,12 @@
-import express, { Router } from 'express';
-import { PuzzleController } from '../controllers/PuzzleController';
-import { PuzzleService } from '../services/PuzzleService';
-import { PuzzleRepository } from '../repositories/PuzzleRepository';
+import express, { Router, Request, Response } from 'express';
 import { validateRequiredFields, validateInteger } from '../middlewares/validator';
 
-// 의존성 주입
-const puzzleRepository = new PuzzleRepository();
-const puzzleService = new PuzzleService(puzzleRepository);
-const puzzleController = new PuzzleController(puzzleService);
-
 const router: Router = express.Router();
+
+// app.locals에서 컨트롤러 가져오기
+const getPuzzleController = (req: Request) => {
+    return req.app.locals.puzzleController;
+};
 
 /**
  * @swagger
@@ -72,7 +69,10 @@ const router: Router = express.Router();
  * Query: puzzle_type, difficulty (optional)
  */
 router.get('/random',
-    puzzleController.getRandomPuzzle
+    (req: Request, res: Response) => {
+        const controller = getPuzzleController(req);
+        return controller.getRandomPuzzle(req, res);
+    }
 );
 
 /**
@@ -110,7 +110,10 @@ router.get('/random',
  * Query: date (optional)
  */
 router.get('/daily',
-    puzzleController.getDailyPuzzle
+    (req: Request, res: Response) => {
+        const controller = getPuzzleController(req);
+        return controller.getDailyPuzzle(req, res);
+    }
 );
 
 /**
@@ -184,7 +187,10 @@ router.get('/daily',
  */
 router.post('/',
     validateRequiredFields(['puzzle_type', 'difficulty', 'puzzle_data', 'answer_data']),
-    puzzleController.createPuzzle
+    (req: Request, res: Response) => {
+        const controller = getPuzzleController(req);
+        return controller.createPuzzle(req, res);
+    }
 );
 
 /**
@@ -222,7 +228,10 @@ router.post('/',
  */
 router.delete('/:puzzle_id',
     validateInteger('puzzle_id'),
-    puzzleController.deletePuzzle
+    (req: Request, res: Response) => {
+        const controller = getPuzzleController(req);
+        return controller.deletePuzzle(req, res);
+    }
 );
 
 export default router;

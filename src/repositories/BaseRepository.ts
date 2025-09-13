@@ -51,7 +51,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
      * 모든 레코드 조회
      */
     async findAll(): Promise<T[]> {
-        const query = `SELECT * FROM ${this.tableName} ORDER BY created_at DESC`;
+        const query = `SELECT * FROM "${this.tableName}" ORDER BY created_at DESC`;
         const result = await this.execute(query);
         return result.rows;
     }
@@ -60,7 +60,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
      * ID로 레코드 조회
      */
     async findById(id: number | string): Promise<T | null> {
-        const query = `SELECT * FROM ${this.tableName} WHERE id = $1`;
+        const query = `SELECT * FROM "${this.tableName}" WHERE id = $1`;
         const result = await this.execute(query, [id]);
         return result.rows[0] || null;
     }
@@ -73,7 +73,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
         const values = Object.values(conditions);
         const whereClause = keys.map((key, index) => `${key} = $${index + 1}`).join(' AND ');
         
-        const query = `SELECT * FROM ${this.tableName} WHERE ${whereClause}`;
+        const query = `SELECT * FROM "${this.tableName}" WHERE ${whereClause}`;
         const result = await this.execute(query, values);
         return result.rows;
     }
@@ -184,7 +184,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
      * 레코드 삭제
      */
     async delete(id: number | string): Promise<boolean> {
-        const query = `DELETE FROM ${this.tableName} WHERE id = $1`;
+        const query = `DELETE FROM "${this.tableName}" WHERE id = $1`;
         const result = await this.execute(query, [id]);
         return result.rowCount !== null && result.rowCount > 0;
     }
@@ -197,7 +197,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
         const values = Object.values(conditions);
         const whereClause = keys.map((key, index) => `${key} = $${index + 1}`).join(' AND ');
 
-        const query = `DELETE FROM ${this.tableName} WHERE ${whereClause}`;
+        const query = `DELETE FROM "${this.tableName}" WHERE ${whereClause}`;
         const result = await this.execute(query, values);
         return result.rowCount || 0;
     }
@@ -206,7 +206,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
      * 레코드 개수 조회
      */
     async count(conditions: QueryConditions = {}): Promise<number> {
-        let query = `SELECT COUNT(*) as count FROM ${this.tableName}`;
+        let query = `SELECT COUNT(*) as count FROM "${this.tableName}"`;
         let params: any[] = [];
 
         if (Object.keys(conditions).length > 0) {
@@ -252,13 +252,13 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
         }
 
         // 전체 개수 조회
-        const countQuery = `SELECT COUNT(*) as count FROM ${this.tableName} ${whereClause}`;
+        const countQuery = `SELECT COUNT(*) as count FROM "${this.tableName}" ${whereClause}`;
         const countResult = await this.execute(countQuery, params);
         const total = parseInt((countResult.rows[0] as any).count);
 
         // 페이지 데이터 조회
         const dataQuery = `
-            SELECT * FROM ${this.tableName} 
+            SELECT * FROM "${this.tableName}" 
             ${whereClause} 
             ORDER BY ${orderBy} ${orderDirection} 
             LIMIT $${params.length + 1} OFFSET $${params.length + 2}

@@ -1,15 +1,12 @@
-import express, { Router } from 'express';
-import { UserController } from '../controllers/UserController';
-import { UserService } from '../services/UserService';
-import { UserRepository } from '../repositories/UserRepository';
+import express, { Router, Request, Response } from 'express';
 import { validateRequiredFields } from '../middlewares/validator';
 
-// 의존성 주입
-const userRepository = new UserRepository();
-const userService = new UserService(userRepository);
-const userController = new UserController(userService);
-
 const router: Router = express.Router();
+
+// app.locals에서 컨트롤러 가져오기
+const getUserController = (req: Request) => {
+    return req.app.locals.userController;
+};
 
 /**
  * @swagger
@@ -70,7 +67,10 @@ const router: Router = express.Router();
  */
 router.post('/register',
     validateRequiredFields(['device_id']),
-    userController.register
+    (req: Request, res: Response) => {
+        const controller = getUserController(req);
+        return controller.register(req, res);
+    }
 );
 
 /**
@@ -107,7 +107,10 @@ router.post('/register',
  * GET /api/user/device/:device_id
  */
 router.get('/device/:device_id',
-    userController.getByDeviceId
+    (req: Request, res: Response) => {
+        const controller = getUserController(req);
+        return controller.getByDeviceId(req, res);
+    }
 );
 
 /**
@@ -169,7 +172,10 @@ router.get('/device/:device_id',
  * GET /api/user/:user_id
  */
 router.get('/:user_id',
-    userController.getById
+    (req: Request, res: Response) => {
+        const controller = getUserController(req);
+        return controller.getById(req, res);
+    }
 );
 
 /**
@@ -177,7 +183,10 @@ router.get('/:user_id',
  * DELETE /api/user/:user_id
  */
 router.delete('/:user_id',
-    userController.deleteUser
+    (req: Request, res: Response) => {
+        const controller = getUserController(req);
+        return controller.deleteUser(req, res);
+    }
 );
 
 export default router;

@@ -18,6 +18,8 @@ export class PuzzleService extends BaseService<Puzzle> {
      */
     async getRandomPuzzle(puzzleType?: string, difficulty?: string): Promise<Puzzle | null> {
         try {
+            console.log('🔍 getRandomPuzzle 호출됨:', { puzzleType, difficulty });
+            
             const conditions: any = {};
             if (puzzleType) {
                 conditions.puzzle_type = puzzleType;
@@ -26,7 +28,9 @@ export class PuzzleService extends BaseService<Puzzle> {
                 conditions.difficulty = difficulty;
             }
 
+            console.log('🔍 조회 조건:', conditions);
             const puzzles = await this.puzzleRepository.findBy(conditions);
+            console.log('🔍 조회 결과:', puzzles.length, '개');
             
             if (puzzles.length === 0) {
                 return null;
@@ -36,7 +40,7 @@ export class PuzzleService extends BaseService<Puzzle> {
             const randomIndex = Math.floor(Math.random() * puzzles.length);
             return Puzzle.fromDatabaseRow(puzzles[randomIndex]);
         } catch (error) {
-            console.error('Error in getRandomPuzzle:', error);
+            console.error('❌ Error in getRandomPuzzle:', error);
             throw error;
         }
     }
