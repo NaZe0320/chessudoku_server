@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
 export interface ApiSuccessResponse<T = any> {
-    success: true;
     message: string;
     data: T;
     timestamp: string;
@@ -9,7 +8,6 @@ export interface ApiSuccessResponse<T = any> {
 }
 
 export interface ApiErrorResponse {
-    success: false;
     message: string;
     timestamp: string;
     code?: string;
@@ -67,7 +65,6 @@ declare global {
  */
 export const successResponse = <T>(data: T, message: string = '성공', meta?: any): ApiSuccessResponse<T> => {
     const response: ApiSuccessResponse<T> = {
-        success: true,
         message,
         data,
         timestamp: new Date().toISOString()
@@ -85,7 +82,6 @@ export const successResponse = <T>(data: T, message: string = '성공', meta?: a
  */
 export const errorResponse = (message: string, error?: any, code?: string): ApiErrorResponse => {
     const response: ApiErrorResponse = {
-        success: false,
         message,
         timestamp: new Date().toISOString()
     };

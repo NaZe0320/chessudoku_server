@@ -168,10 +168,6 @@ const swaggerDefinition: SwaggerDefinition = {
       ApiResponse: {
         type: 'object',
         properties: {
-          success: {
-            type: 'boolean',
-            description: '요청 성공 여부'
-          },
           message: {
             type: 'string',
             description: '응답 메시지'
@@ -190,10 +186,6 @@ const swaggerDefinition: SwaggerDefinition = {
       ErrorResponse: {
         type: 'object',
         properties: {
-          success: {
-            type: 'boolean',
-            example: false
-          },
           message: {
             type: 'string',
             description: '에러 메시지'

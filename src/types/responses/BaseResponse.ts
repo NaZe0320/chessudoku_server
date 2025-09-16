@@ -8,12 +8,10 @@ export namespace BaseResponse {
    * 기본 응답 클래스
    */
   export abstract class Base {
-    public readonly success: boolean;
     public readonly message: string;
     public readonly timestamp: string;
     
-    constructor(message: string, success: boolean) {
-      this.success = success;
+    constructor(message: string) {
       this.message = message;
       this.timestamp = new Date().toISOString();
     }
@@ -26,7 +24,7 @@ export namespace BaseResponse {
     public readonly data: T;
     
     constructor(data: T, message: string = "성공") {
-      super(message, true);
+      super(message);
       this.data = data;
     }
   }
@@ -38,7 +36,7 @@ export namespace BaseResponse {
     public readonly data: T;
     
     constructor(data: T, message: string = "생성 성공") {
-      super(message, true);
+      super(message);
       this.data = data;
     }
   }
@@ -48,7 +46,7 @@ export namespace BaseResponse {
    */
   export class NotFound extends Base {
     constructor(message: string = "요청한 리소스를 찾을 수 없습니다") {
-      super(message, false);
+      super(message);
     }
   }
 
@@ -57,7 +55,7 @@ export namespace BaseResponse {
    */
   export class BadRequest extends Base {
     constructor(message: string = "잘못된 요청입니다") {
-      super(message, false);
+      super(message);
     }
   }
 
@@ -66,7 +64,7 @@ export namespace BaseResponse {
    */
   export class Unauthorized extends Base {
     constructor(message: string = "인증이 필요합니다") {
-      super(message, false);
+      super(message);
     }
   }
 
@@ -75,7 +73,7 @@ export namespace BaseResponse {
    */
   export class Forbidden extends Base {
     constructor(message: string = "권한이 없습니다") {
-      super(message, false);
+      super(message);
     }
   }
 
@@ -84,7 +82,7 @@ export namespace BaseResponse {
    */
   export class Conflict extends Base {
     constructor(message: string = "데이터 충돌이 발생했습니다") {
-      super(message, false);
+      super(message);
     }
   }
 
@@ -93,7 +91,7 @@ export namespace BaseResponse {
    */
   export class InternalServerError extends Base {
     constructor(message: string = "서버 내부 오류가 발생했습니다") {
-      super(message, false);
+      super(message);
     }
   }
 }
