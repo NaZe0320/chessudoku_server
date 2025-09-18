@@ -7,7 +7,7 @@
 -- ====================
 -- 사용자 테이블
 -- ====================
-CREATE TABLE IF NOT EXISTS "User" (
+CREATE TABLE IF NOT EXISTS "user" (
     user_id VARCHAR(8) NOT NULL,
     device_id VARCHAR(255) NOT NULL,
     nickname VARCHAR(20) NOT NULL,
@@ -17,13 +17,13 @@ CREATE TABLE IF NOT EXISTS "User" (
 );
 
 -- 인덱스 생성
-CREATE INDEX IF NOT EXISTS idx_user_create_at ON "User" (create_at);
+CREATE INDEX IF NOT EXISTS idx_user_create_at ON "user" (create_at);
 
 
 -- ====================
 -- 퍼즐 테이블
 -- ====================
-CREATE TABLE IF NOT EXISTS "Puzzle" (
+CREATE TABLE IF NOT EXISTS "puzzle" (
     puzzle_id SERIAL PRIMARY KEY,
     puzzle_type VARCHAR(20) NOT NULL DEFAULT 'normal', -- Enum: normal, daily_challenge
     difficulty VARCHAR(10) NOT NULL DEFAULT 'Easy', -- Enum: Easy, Medium, Hard, Expert
@@ -33,15 +33,15 @@ CREATE TABLE IF NOT EXISTS "Puzzle" (
 );
 
 -- 인덱스 생성
-CREATE INDEX IF NOT EXISTS idx_puzzle_type ON "Puzzle" (puzzle_type);
-CREATE INDEX IF NOT EXISTS idx_puzzle_difficulty ON "Puzzle" (difficulty);
-CREATE INDEX IF NOT EXISTS idx_puzzle_daily_date ON "Puzzle" (daily_date);
-CREATE INDEX IF NOT EXISTS idx_puzzle_type_difficulty ON "Puzzle" (puzzle_type, difficulty);
+CREATE INDEX IF NOT EXISTS idx_puzzle_type ON "puzzle" (puzzle_type);
+CREATE INDEX IF NOT EXISTS idx_puzzle_difficulty ON "puzzle" (difficulty);
+CREATE INDEX IF NOT EXISTS idx_puzzle_daily_date ON "puzzle" (daily_date);
+CREATE INDEX IF NOT EXISTS idx_puzzle_type_difficulty ON "puzzle" (puzzle_type, difficulty);
 
 -- ====================
 -- 퍼즐 기록 테이블
 -- ====================
-CREATE TABLE IF NOT EXISTS "PuzzleRecord" (
+CREATE TABLE IF NOT EXISTS "puzzle_record" (
     record_id SERIAL,
     user_id VARCHAR(8) NOT NULL,
     puzzle_id INTEGER NOT NULL,
@@ -49,23 +49,23 @@ CREATE TABLE IF NOT EXISTS "PuzzleRecord" (
     solve_time INTEGER NOT NULL,
     hints_used INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (record_id, user_id, puzzle_id),
-    CONSTRAINT FK_User_TO_PuzzleRecord_1 FOREIGN KEY (user_id) REFERENCES "User" (user_id) ON DELETE CASCADE,
-    CONSTRAINT FK_Puzzle_TO_PuzzleRecord_1 FOREIGN KEY (puzzle_id) REFERENCES "Puzzle" (puzzle_id) ON DELETE CASCADE
+    CONSTRAINT FK_User_TO_PuzzleRecord_1 FOREIGN KEY (user_id) REFERENCES "user" (user_id) ON DELETE CASCADE,
+    CONSTRAINT FK_Puzzle_TO_PuzzleRecord_1 FOREIGN KEY (puzzle_id) REFERENCES "puzzle" (puzzle_id) ON DELETE CASCADE
 );
 
 -- 인덱스 생성
-CREATE INDEX IF NOT EXISTS idx_puzzle_record_user_id ON "PuzzleRecord" (user_id);
-CREATE INDEX IF NOT EXISTS idx_puzzle_record_puzzle_id ON "PuzzleRecord" (puzzle_id);
-CREATE INDEX IF NOT EXISTS idx_puzzle_record_create_at ON "PuzzleRecord" (create_at);
-CREATE INDEX IF NOT EXISTS idx_puzzle_record_solve_time ON "PuzzleRecord" (solve_time);
-CREATE INDEX IF NOT EXISTS idx_puzzle_record_hints_used ON "PuzzleRecord" (hints_used);
+CREATE INDEX IF NOT EXISTS idx_puzzle_record_user_id ON "puzzle_record" (user_id);
+CREATE INDEX IF NOT EXISTS idx_puzzle_record_puzzle_id ON "puzzle_record" (puzzle_id);
+CREATE INDEX IF NOT EXISTS idx_puzzle_record_create_at ON "puzzle_record" (create_at);
+CREATE INDEX IF NOT EXISTS idx_puzzle_record_solve_time ON "puzzle_record" (solve_time);
+CREATE INDEX IF NOT EXISTS idx_puzzle_record_hints_used ON "puzzle_record" (hints_used);
 
 -- ====================
 -- 샘플 데이터 (테스트용)
 -- ====================
 
 -- 테스트 사용자 1
-INSERT INTO "User" (user_id, device_id, nickname, create_at) 
+INSERT INTO "user" (user_id, device_id, nickname, create_at) 
 VALUES (
     'ABC12345', 
     'test-device-001', 
@@ -74,7 +74,7 @@ VALUES (
 ) ON CONFLICT (user_id) DO UPDATE SET nickname = EXCLUDED.nickname;
 
 -- 테스트 사용자 2
-INSERT INTO "User" (user_id, device_id, nickname, create_at) 
+INSERT INTO "user" (user_id, device_id, nickname, create_at) 
 VALUES (
     'XYZ67890', 
     'test-device-002', 
@@ -84,15 +84,14 @@ VALUES (
 
 
 -- 테스트 퍼즐들
-INSERT INTO "Puzzle" (puzzle_id, puzzle_type, difficulty, puzzle_data, answer_data, daily_date) 
+INSERT INTO "puzzle" (puzzle_type, difficulty, puzzle_data, answer_data, daily_date) 
 VALUES 
-    (1, 'daily_challenge', 'Easy', '{"board": [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]], "pieces": [{"type": "king", "position": [4,4]}]}', '{"board": [[1,2,3,4,5,6,7,8,9],[4,5,6,7,8,9,1,2,3],[7,8,9,1,2,3,4,5,6],[2,3,4,5,6,7,8,9,1],[5,6,7,8,9,1,2,3,4],[8,9,1,2,3,4,5,6,7],[3,4,5,6,7,8,9,1,2],[6,7,8,9,1,2,3,4,5],[9,1,2,3,4,5,6,7,8]]}', CURRENT_DATE),
-    (2, 'normal', 'Medium', '{"board": [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]], "pieces": [{"type": "queen", "position": [3,3]}]}', '{"board": [[1,2,3,4,5,6,7,8,9],[4,5,6,7,8,9,1,2,3],[7,8,9,1,2,3,4,5,6],[2,3,4,5,6,7,8,9,1],[5,6,7,8,9,1,2,3,4],[8,9,1,2,3,4,5,6,7],[3,4,5,6,7,8,9,1,2],[6,7,8,9,1,2,3,4,5],[9,1,2,3,4,5,6,7,8]]}', NULL),
-    (3, 'normal', 'Hard', '{"board": [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]], "pieces": [{"type": "rook", "position": [0,0]}]}', '{"board": [[1,2,3,4,5,6,7,8,9],[4,5,6,7,8,9,1,2,3],[7,8,9,1,2,3,4,5,6],[2,3,4,5,6,7,8,9,1],[5,6,7,8,9,1,2,3,4],[8,9,1,2,3,4,5,6,7],[3,4,5,6,7,8,9,1,2],[6,7,8,9,1,2,3,4,5],[9,1,2,3,4,5,6,7,8]]}', NULL)
-ON CONFLICT (puzzle_id) DO UPDATE SET puzzle_data = EXCLUDED.puzzle_data;
+    ('daily_challenge', 'Easy', '{"board": [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]], "pieces": [{"type": "king", "position": [4,4]}]}', '{"board": [[1,2,3,4,5,6,7,8,9],[4,5,6,7,8,9,1,2,3],[7,8,9,1,2,3,4,5,6],[2,3,4,5,6,7,8,9,1],[5,6,7,8,9,1,2,3,4],[8,9,1,2,3,4,5,6,7],[3,4,5,6,7,8,9,1,2],[6,7,8,9,1,2,3,4,5],[9,1,2,3,4,5,6,7,8]]}', CURRENT_DATE),
+    ('normal', 'Medium', '{"board": [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]], "pieces": [{"type": "queen", "position": [3,3]}]}', '{"board": [[1,2,3,4,5,6,7,8,9],[4,5,6,7,8,9,1,2,3],[7,8,9,1,2,3,4,5,6],[2,3,4,5,6,7,8,9,1],[5,6,7,8,9,1,2,3,4],[8,9,1,2,3,4,5,6,7],[3,4,5,6,7,8,9,1,2],[6,7,8,9,1,2,3,4,5],[9,1,2,3,4,5,6,7,8]]}', NULL),
+    ('normal', 'Hard', '{"board": [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]], "pieces": [{"type": "rook", "position": [0,0]}]}', '{"board": [[1,2,3,4,5,6,7,8,9],[4,5,6,7,8,9,1,2,3],[7,8,9,1,2,3,4,5,6],[2,3,4,5,6,7,8,9,1],[5,6,7,8,9,1,2,3,4],[8,9,1,2,3,4,5,6,7],[3,4,5,6,7,8,9,1,2],[6,7,8,9,1,2,3,4,5],[9,1,2,3,4,5,6,7,8]]}', NULL);
 
 -- 테스트 퍼즐 기록들
-INSERT INTO "PuzzleRecord" (user_id, puzzle_id, create_at, solve_time, hints_used) 
+INSERT INTO "puzzle_record" (user_id, puzzle_id, create_at, solve_time, hints_used) 
 VALUES 
     ('ABC12345', 1, NOW() - INTERVAL '2 hours', 120, 0),
     ('ABC12345', 2, NOW() - INTERVAL '1 hour', 180, 2),
@@ -115,7 +114,7 @@ SELECT
     COALESCE(stats.best_time, 0) as best_time,
     COALESCE(stats.total_hints, 0) as total_hints,
     COALESCE(stats.avg_hints, 0) as avg_hints
-FROM "User" u
+FROM "user" u
 LEFT JOIN (
     SELECT 
         user_id,
@@ -125,6 +124,6 @@ LEFT JOIN (
         MIN(solve_time) as best_time,
         SUM(hints_used) as total_hints,
         AVG(hints_used) as avg_hints
-    FROM "PuzzleRecord" 
+    FROM "puzzle_record" 
     GROUP BY user_id
 ) stats ON u.user_id = stats.user_id;

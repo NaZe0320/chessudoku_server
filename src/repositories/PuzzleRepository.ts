@@ -6,7 +6,8 @@ import { Puzzle } from '../models/Puzzle';
  */
 export class PuzzleRepository extends BaseRepository<Puzzle> {
     constructor() {
-        super('Puzzle');
+        super('puzzle');
+
     }
 }
 

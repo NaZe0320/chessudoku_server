@@ -137,5 +137,9 @@ Thumbs.db
 # Config files that should not be committed
 config.js
 
+# Docker Compose files with sensitive data
+docker-compose.yml
+docker-compose.simple.yml
+
 # PM2
 .pm2

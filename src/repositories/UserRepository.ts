@@ -6,7 +6,7 @@ import { User } from '../models/User';
  */
 export class UserRepository extends BaseRepository<User> {
     constructor() {
-        super('User');
+        super('user');
     }
 
     /**

@@ -51,7 +51,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
      * 모든 레코드 조회
      */
     async findAll(): Promise<T[]> {
-        const query = `SELECT * FROM ${this.tableName} ORDER BY created_at DESC`;
+        const query = `SELECT * FROM ${this.tableName}`;
         const result = await this.execute(query);
         return result.rows;
     }
@@ -143,7 +143,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
 
         const query = `
             UPDATE ${this.tableName} 
-            SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
+            SET ${setClause}
             WHERE id = $1 
             RETURNING *
         `;
@@ -171,7 +171,7 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
 
         const query = `
             UPDATE ${this.tableName} 
-            SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
+            SET ${setClause}
             WHERE ${whereClause} 
             RETURNING *
         `;
@@ -236,8 +236,8 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
         page: number = 1, 
         limit: number = 10, 
         conditions: QueryConditions = {},
-        orderBy: string = 'created_at',
-        orderDirection: 'ASC' | 'DESC' = 'DESC'
+        orderBy: string = 'id',
+        orderDirection: 'ASC' | 'DESC' = 'ASC'
     ): Promise<{ items: T[], total: number, page: number, limit: number }> {
         const offset = (page - 1) * limit;
         
