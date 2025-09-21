@@ -30,9 +30,9 @@ const router: Router = express.Router();
  *         name: difficulty
  *         schema:
  *           type: string
- *           enum: [Easy, Medium, Hard, Expert]
+ *           enum: [easy, medium, hard, expert]
  *         description: 퍼즐 난이도
- *         example: "Easy"
+ *         example: "easy"
  *     responses:
  *       200:
  *         description: 랜덤 퍼즐 조회 성공
@@ -46,7 +46,7 @@ const router: Router = express.Router();
  *               data:
  *                 puzzle_id: 1
  *                 puzzle_type: "normal"
- *                 difficulty: "Easy"
+ *                 difficulty: "easy"
  *                 puzzle_data:
  *                   board: [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]
  *                   pieces: [{"type": "king", "position": [4,4]}]
@@ -139,9 +139,9 @@ router.get('/daily',
  *                 example: "normal"
  *               difficulty:
  *                 type: string
- *                 enum: [Easy, Medium, Hard, Expert]
+ *                 enum: [easy, medium, hard, expert]
  *                 description: 퍼즐 난이도
- *                 example: "Easy"
+ *                 example: "easy"
  *               puzzle_data:
  *                 type: object
  *                 description: 퍼즐 데이터

@@ -71,6 +71,11 @@ export abstract class BaseRepository<T extends DatabaseRecord = DatabaseRecord> 
     async findBy(conditions: QueryConditions): Promise<T[]> {
         const keys = Object.keys(conditions);
         const values = Object.values(conditions);
+        
+        if (keys.length === 0) {
+            return this.findAll();
+        }
+        
         const whereClause = keys.map((key, index) => `${key} = $${index + 1}`).join(' AND ');
         
         const query = `SELECT * FROM ${this.tableName} WHERE ${whereClause}`;

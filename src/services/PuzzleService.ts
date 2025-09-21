@@ -23,7 +23,8 @@ export class PuzzleService extends BaseService<Puzzle> {
                 conditions.puzzle_type = puzzleType;
             }
             if (difficulty) {
-                conditions.difficulty = difficulty;
+                // 난이도를 소문자로 정규화
+                conditions.difficulty = difficulty.toLowerCase();
             }
 
             const puzzles = await this.puzzleRepository.findBy(conditions);
