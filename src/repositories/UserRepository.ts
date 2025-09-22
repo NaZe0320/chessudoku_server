@@ -6,7 +6,59 @@ import { User } from '../models/User';
  */
 export class UserRepository extends BaseRepository<User> {
     constructor() {
-        super('user');
+        super('"user"'); // PostgreSQL에서 테이블 이름을 따옴표로 감싸기
+    }
+
+    /**
+     * User ID로 사용자 조회 (user_id 컬럼 사용)
+     */
+    override async findById(userId: string): Promise<User | null> {
+        try {
+            const query = `SELECT * FROM ${this.tableName} WHERE user_id = $1`;
+            const result = await this.execute(query, [userId]);
+            return result.rows[0] || null;
+        } catch (error) {
+            console.error('Error in findById:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * User ID로 사용자 업데이트 (user_id 컬럼 사용)
+     */
+    override async update(userId: string, data: any): Promise<User | null> {
+        try {
+            const keys = Object.keys(data);
+            const values = Object.values(data);
+            const setClause = keys.map((key, index) => `${key} = $${index + 2}`).join(', ');
+
+            const query = `
+                UPDATE ${this.tableName} 
+                SET ${setClause}
+                WHERE user_id = $1 
+                RETURNING *
+            `;
+            
+            const result = await this.execute(query, [userId, ...values]);
+            return result.rows[0] || null;
+        } catch (error) {
+            console.error('Error in update:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * User ID로 사용자 삭제 (user_id 컬럼 사용)
+     */
+    override async delete(userId: string): Promise<boolean> {
+        try {
+            const query = `DELETE FROM ${this.tableName} WHERE user_id = $1`;
+            const result = await this.execute(query, [userId]);
+            return result.rowCount !== null && result.rowCount > 0;
+        } catch (error) {
+            console.error('Error in delete:', error);
+            throw error;
+        }
     }
 
     /**

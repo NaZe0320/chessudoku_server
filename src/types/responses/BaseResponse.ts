@@ -21,6 +21,7 @@ export namespace BaseResponse {
    * 성공 응답 (200)
    */
   export class OK<T> extends Base {
+    public readonly success: boolean = true;
     public readonly data: T;
     
     constructor(data: T, message: string = "성공") {

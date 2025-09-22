@@ -54,8 +54,9 @@ export class User implements DatabaseRecord {
     /**
      * 데이터베이스 저장용 객체 반환
      */
-    toDatabaseJSON(): Omit<DatabaseUserData, 'user_id'> {
+    toDatabaseJSON(): DatabaseUserData {
         return {
+            user_id: this.user_id,
             device_id: this.device_id,
             nickname: this.nickname,
             create_at: this.create_at,

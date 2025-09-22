@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS "user" (
     device_id VARCHAR(255) NOT NULL,
     nickname VARCHAR(20) NOT NULL,
     create_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (user_id),
     CONSTRAINT idx_user_device_id UNIQUE (device_id)
 );

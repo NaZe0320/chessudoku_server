@@ -16,34 +16,14 @@ export class UserController extends BaseController<User> {
         this.userService = userService;
 
         // 메서드 바인딩
-        this.register = this.register.bind(this);
         this.getByDeviceId = this.getByDeviceId.bind(this);
         this.getById = this.getById.bind(this);
         this.deleteUser = this.deleteUser.bind(this);
     }
 
-    /**
-     * 사용자 등록
-     * POST /api/user/register
-     */
-    async register(req: Request, res: Response): Promise<void> {
-        try {
-            const { device_id } = req.body;
-
-            if (!device_id) {
-                res.status(400).json(new UserResponse.DeviceIdRequired());
-                return;
-            }
-
-            const result = await this.userService.registerUser({ device_id });
-            res.status(201).json(new UserResponse.RegisterUserCreated(result));
-        } catch (error) {
-            this.handleError(res, error as Error);
-        }
-    }
 
     /**
-     * 디바이스 ID로 사용자 조회
+     * 디바이스 ID로 사용자 조회 (없으면 404)
      * GET /api/user/device/:device_id
      */
     async getByDeviceId(req: Request, res: Response): Promise<void> {
@@ -64,13 +44,29 @@ export class UserController extends BaseController<User> {
     }
 
     /**
+     * 디바이스 ID로 사용자 조회 (없으면 자동 등록)
+     * GET /api/user/device/:device_id/create
+     */
+    async getByDeviceIdOrCreate(req: Request, res: Response): Promise<void> {
+        try {
+            const { device_id } = req.params;
+
+            const user = await this.userService.getUserByDeviceIdOrCreate(device_id);
+
+            res.status(200).json(new UserResponse.GetUserByDeviceIdOK(user));
+        } catch (error) {
+            this.handleError(res, error as Error);
+        }
+    }
+
+    /**
      * 사용자 ID로 조회
-     * GET /api/user/:id
+     * GET /api/user/:user_id
      */
     override async getById(req: Request, res: Response): Promise<void> {
         try {
-            const { id } = req.params;
-            const user = await this.userService.getUserById(id);
+            const { user_id } = req.params;
+            const user = await this.userService.getUserById(user_id);
 
             if (!user) {
                 res.status(404).json(new UserResponse.UserNotFound());
@@ -104,10 +100,14 @@ export class UserController extends BaseController<User> {
     }
 
     /**
-     * create 메서드 (register로 대체)
+     * create 메서드 (사용하지 않음 - getByDeviceId로 자동 등록)
      */
     override async create(req: Request, res: Response): Promise<void> {
-        await this.register(req, res);
+        res.status(405).json({
+            success: false,
+            message: "이 메서드는 사용할 수 없습니다. GET /api/user/device/:device_id를 사용하세요",
+            timestamp: new Date().toISOString()
+        });
     }
 
     /**

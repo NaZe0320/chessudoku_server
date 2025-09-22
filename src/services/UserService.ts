@@ -31,9 +31,13 @@ export class UserService extends BaseService<User> {
 
             // 닉네임 자동 생성
             const nickname = `사용자${Date.now()}`;
+            
+            // user_id 자동 생성 (8자리 랜덤 문자열)
+            const userId = this.generateUserId();
 
             // 새 사용자 생성
             const newUser = new User({
+                user_id: userId,
                 device_id: userData.device_id,
                 nickname: nickname,
                 create_at: new Date(),
@@ -66,17 +70,52 @@ export class UserService extends BaseService<User> {
     }
 
     /**
-     * 디바이스 ID로 사용자 조회 (삭제되지 않은 사용자만)
+     * 디바이스 ID로 사용자 조회 (없으면 null 반환)
      */
     async getUserByDeviceId(deviceId: string): Promise<User | null> {
         try {
-            const user = await this.userRepository.findByDeviceId(deviceId);
-            if (!user || user.is_deleted) {
-                return null;
+            // 디바이스 ID 검증
+            if (!deviceId || deviceId.trim() === '') {
+                throw new Error('디바이스 ID는 필수입니다');
             }
-            return User.fromDatabaseRow(user);
+
+            const user = await this.userRepository.findByDeviceId(deviceId);
+            
+            // 사용자가 존재하고 삭제되지 않은 경우
+            if (user && !user.is_deleted) {
+                return User.fromDatabaseRow(user);
+            }
+
+            // 사용자가 없거나 삭제된 경우 null 반환
+            return null;
         } catch (error) {
             console.error('Error in getUserByDeviceId:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 디바이스 ID로 사용자 조회 (없으면 자동 등록)
+     */
+    async getUserByDeviceIdOrCreate(deviceId: string): Promise<User> {
+        try {
+            // 디바이스 ID 검증
+            if (!deviceId || deviceId.trim() === '') {
+                throw new Error('디바이스 ID는 필수입니다');
+            }
+
+            const user = await this.userRepository.findByDeviceId(deviceId);
+            
+            // 사용자가 존재하고 삭제되지 않은 경우
+            if (user && !user.is_deleted) {
+                return User.fromDatabaseRow(user);
+            }
+
+            // 사용자가 없거나 삭제된 경우 새로 등록
+            console.log(`사용자가 없어서 자동 등록: ${deviceId}`);
+            return await this.registerUser({ device_id: deviceId });
+        } catch (error) {
+            console.error('Error in getUserByDeviceIdOrCreate:', error);
             throw error;
         }
     }
@@ -99,6 +138,18 @@ export class UserService extends BaseService<User> {
             console.error('Error in deleteUser:', error);
             throw error;
         }
+    }
+
+    /**
+     * 8자리 랜덤 user_id 생성
+     */
+    private generateUserId(): string {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
     }
 
     /**
