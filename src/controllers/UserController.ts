@@ -17,6 +17,7 @@ export class UserController extends BaseController<User> {
 
         // 메서드 바인딩
         this.getByDeviceId = this.getByDeviceId.bind(this);
+        this.getByDeviceIdOrCreate = this.getByDeviceIdOrCreate.bind(this);
         this.getById = this.getById.bind(this);
         this.deleteUser = this.deleteUser.bind(this);
     }
