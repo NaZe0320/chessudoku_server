@@ -64,6 +64,18 @@ export class User implements DatabaseRecord {
     }
 
     /**
+     * 공개용 객체 반환 (is_deleted 필드 제외)
+     */
+    toPublicJSON(): Omit<UserData, 'is_deleted'> {
+        return {
+            user_id: this.user_id,
+            device_id: this.device_id,
+            nickname: this.nickname,
+            create_at: this.create_at
+        };
+    }
+
+    /**
      * 데이터베이스 로우에서 User 인스턴스 생성
      */
     static fromDatabaseRow(row: UserData): User {

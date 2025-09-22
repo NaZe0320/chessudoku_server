@@ -1,5 +1,5 @@
 import { BaseResponse } from './BaseResponse';
-import { User } from '../../models/User';
+import { User, UserData } from '../../models/User';
 
 /**
  * 사용자 관련 응답 클래스들
@@ -9,9 +9,9 @@ export namespace UserResponse {
    * 사용자 목록 조회 성공 응답
    * GET /api/users
    */
-  export class GetAllUsersOK extends BaseResponse.OK<User[]> {
+  export class GetAllUsersOK extends BaseResponse.OK<Omit<UserData, 'is_deleted'>[]> {
     constructor(data: User[]) {
-      super(data, "사용자 목록을 조회했습니다");
+      super(data.map(user => user.toPublicJSON()), "사용자 목록을 조회했습니다");
     }
   }
 
@@ -19,9 +19,9 @@ export namespace UserResponse {
    * 사용자 정보 조회 성공 응답
    * GET /api/users/:id
    */
-  export class GetUserByIdOK extends BaseResponse.OK<User> {
+  export class GetUserByIdOK extends BaseResponse.OK<Omit<UserData, 'is_deleted'>> {
     constructor(data: User) {
-      super(data, "사용자 정보를 조회했습니다");
+      super(data.toPublicJSON(), "사용자 정보를 조회했습니다");
     }
   }
 
@@ -29,9 +29,9 @@ export namespace UserResponse {
    * 디바이스 ID로 사용자 조회 성공 응답
    * GET /api/users/device/:device_id
    */
-  export class GetUserByDeviceIdOK extends BaseResponse.OK<User> {
+  export class GetUserByDeviceIdOK extends BaseResponse.OK<Omit<UserData, 'is_deleted'>> {
     constructor(data: User) {
-      super(data, "사용자 정보를 조회했습니다");
+      super(data.toPublicJSON(), "사용자 정보를 조회했습니다");
     }
   }
 
@@ -39,9 +39,9 @@ export namespace UserResponse {
    * 사용자 등록 성공 응답
    * POST /api/users/register
    */
-  export class RegisterUserCreated extends BaseResponse.Created<User> {
+  export class RegisterUserCreated extends BaseResponse.Created<Omit<UserData, 'is_deleted'>> {
     constructor(data: User) {
-      super(data, "사용자가 성공적으로 등록되었습니다");
+      super(data.toPublicJSON(), "사용자가 성공적으로 등록되었습니다");
     }
   }
 
