@@ -7,7 +7,9 @@
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "dev:watch": "nodemon --exec ts-node src/server.ts",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "tunnel": "node scripts/setup_ngrok.js",
+    "dev:tunnel": "concurrently \"npm run dev\" \"npm run tunnel\""
   },
   "keywords": [],
   "author": "",
@@ -26,6 +28,7 @@
     "@types/pg": "^8.15.5",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "concurrently": "^8.2.2",
     "nodemon": "^3.1.10",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",

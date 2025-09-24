@@ -56,19 +56,11 @@ const router: Router = express.Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 /**
- * 디바이스 ID로 사용자 조회 (없으면 404)
+ * 디바이스 ID로 사용자 조회 (없으면 자동 등록)
  * GET /api/user/device/:device_id
  */
 router.get('/device/:device_id',
     userController.getByDeviceId
-);
-
-/**
- * 디바이스 ID로 사용자 조회 (없으면 자동 등록)
- * GET /api/user/device/:device_id/create
- */
-router.get('/device/:device_id/create',
-    userController.getByDeviceIdOrCreate
 );
 
 /**

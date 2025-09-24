@@ -1,8 +1,6 @@
--- ChessSudoku Puzzle App Database Schema
+-- ChessSudoku Puzzle App Database Schema (Clean Version)
 -- PostgreSQL 12+ 호환
-
--- 데이터베이스 생성 (이미 존재하면 무시)
--- CREATE DATABASE chessudoku;
+-- is_deleted 필드 제거 및 샘플 데이터 없이 스키마만 포함
 
 -- ====================
 -- 사용자 테이블
@@ -59,10 +57,6 @@ CREATE INDEX IF NOT EXISTS idx_puzzle_record_puzzle_id ON "puzzle_record" (puzzl
 CREATE INDEX IF NOT EXISTS idx_puzzle_record_create_at ON "puzzle_record" (create_at);
 CREATE INDEX IF NOT EXISTS idx_puzzle_record_solve_time ON "puzzle_record" (solve_time);
 CREATE INDEX IF NOT EXISTS idx_puzzle_record_hints_used ON "puzzle_record" (hints_used);
-
--- ====================
--- 샘플 데이터 (테스트용)
--- ====================
 
 -- ====================
 -- 뷰: 사용자별 통계 (성능 최적화용)

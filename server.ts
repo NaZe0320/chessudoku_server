@@ -1,5 +1,6 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
+import os from 'os';
 
 // 환경변수 로드
 dotenv.config();
@@ -24,7 +25,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
         : ['http://localhost:3000', 'http://localhost:3001'];
     
     const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
+    
+    // 개발 환경에서는 모든 origin 허용 (외부 접근을 위해)
+    if (process.env.NODE_ENV === 'development') {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+    } else if (origin && allowedOrigins.includes(origin)) {
         res.header('Access-Control-Allow-Origin', origin);
     }
     
@@ -87,12 +92,30 @@ const startServer = async (): Promise<void> => {
         console.log('🔌 데이터베이스 연결을 테스트합니다...');
         await testConnection();
         
-        // 서버 시작
-        const server = app.listen(PORT, () => {
+        // 서버 시작 - 모든 네트워크 인터페이스에서 접근 허용
+        const server = app.listen(PORT, '0.0.0.0', () => {
+            // 로컬 IP 주소 찾기
+            const networkInterfaces = os.networkInterfaces();
+            let localIP = 'localhost';
+            
+            for (const interfaceName of Object.keys(networkInterfaces)) {
+                const addresses = networkInterfaces[interfaceName];
+                if (addresses) {
+                    for (const address of addresses) {
+                        if (address.family === 'IPv4' && !address.internal) {
+                            localIP = address.address;
+                            break;
+                        }
+                    }
+                }
+                if (localIP !== 'localhost') break;
+            }
+            
             console.log('\n🎉 ========================================');
             console.log('🚀 ChessSudoku TypeScript Server 시작 완료!');
             console.log('🎉 ========================================');
-            console.log(`📍 서버 주소: http://localhost:${PORT}`);
+            console.log(`📍 로컬 서버 주소: http://localhost:${PORT}`);
+            console.log(`🌐 네트워크 접근: http://${localIP}:${PORT}`);
             console.log(`🔍 API 상태: http://localhost:${PORT}/api/health`);
             console.log(`🌍 환경: ${process.env.NODE_ENV || 'development'}`);
             console.log(`📝 TypeScript: ✅ 활성화`);

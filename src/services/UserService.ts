@@ -23,9 +23,9 @@ export class UserService extends BaseService<User> {
                 throw new Error('디바이스 ID는 필수입니다');
             }
 
-            // 기존 디바이스 ID 확인 (삭제되지 않은 사용자만)
+            // 기존 디바이스 ID 확인
             const existingUser = await this.userRepository.findByDeviceId(userData.device_id);
-            if (existingUser && !existingUser.is_deleted) {
+            if (existingUser) {
                 throw new Error('이미 등록된 디바이스입니다');
             }
 
@@ -41,7 +41,6 @@ export class UserService extends BaseService<User> {
                 device_id: userData.device_id,
                 nickname: nickname,
                 create_at: new Date(),
-                is_deleted: false
             });
 
             // 사용자 저장
@@ -54,12 +53,12 @@ export class UserService extends BaseService<User> {
     }
 
     /**
-     * 사용자 ID로 조회 (삭제되지 않은 사용자만)
+     * 사용자 ID로 조회
      */
     async getUserById(userId: string): Promise<User | null> {
         try {
             const user = await this.userRepository.findById(userId);
-            if (!user || user.is_deleted) {
+            if (!user) {
                 return null;
             }
             return User.fromDatabaseRow(user);
@@ -81,12 +80,12 @@ export class UserService extends BaseService<User> {
 
             const user = await this.userRepository.findByDeviceId(deviceId);
             
-            // 사용자가 존재하고 삭제되지 않은 경우
-            if (user && !user.is_deleted) {
+            // 사용자가 존재하는 경우
+            if (user) {
                 return User.fromDatabaseRow(user);
             }
 
-            // 사용자가 없거나 삭제된 경우 null 반환
+            // 사용자가 없는 경우 null 반환
             return null;
         } catch (error) {
             console.error('Error in getUserByDeviceId:', error);
@@ -106,12 +105,12 @@ export class UserService extends BaseService<User> {
 
             const user = await this.userRepository.findByDeviceId(deviceId);
             
-            // 사용자가 존재하고 삭제되지 않은 경우
-            if (user && !user.is_deleted) {
+            // 사용자가 존재하는 경우
+            if (user) {
                 return User.fromDatabaseRow(user);
             }
 
-            // 사용자가 없거나 삭제된 경우 새로 등록
+            // 사용자가 없는 경우 새로 등록
             console.log(`사용자가 없어서 자동 등록: ${deviceId}`);
             return await this.registerUser({ device_id: deviceId });
         } catch (error) {
@@ -121,19 +120,18 @@ export class UserService extends BaseService<User> {
     }
 
     /**
-     * 사용자 삭제 (isDeleted로 처리)
+     * 사용자 삭제 (즉시 삭제)
      */
     async deleteUser(userId: string): Promise<boolean> {
         try {
             // 사용자 존재 확인
             const user = await this.userRepository.findById(userId);
-            if (!user || user.is_deleted) {
+            if (!user) {
                 return false;
             }
 
-            // isDeleted를 true로 업데이트
-            const updatedUser = await this.userRepository.update(userId, { is_deleted: true });
-            return updatedUser !== null;
+            // 데이터베이스에서 완전히 삭제
+            return await this.userRepository.delete(userId);
         } catch (error) {
             console.error('Error in deleteUser:', error);
             throw error;

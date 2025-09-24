@@ -17,38 +17,16 @@ export class UserController extends BaseController<User> {
 
         // 메서드 바인딩
         this.getByDeviceId = this.getByDeviceId.bind(this);
-        this.getByDeviceIdOrCreate = this.getByDeviceIdOrCreate.bind(this);
         this.getById = this.getById.bind(this);
         this.deleteUser = this.deleteUser.bind(this);
     }
 
 
     /**
-     * 디바이스 ID로 사용자 조회 (없으면 404)
+     * 디바이스 ID로 사용자 조회 (없으면 자동 등록)
      * GET /api/user/device/:device_id
      */
     async getByDeviceId(req: Request, res: Response): Promise<void> {
-        try {
-            const { device_id } = req.params;
-
-            const user = await this.userService.getUserByDeviceId(device_id);
-
-            if (!user) {
-                res.status(404).json(new UserResponse.UserNotFound());
-                return;
-            }
-
-            res.status(200).json(new UserResponse.GetUserByDeviceIdOK(user));
-        } catch (error) {
-            this.handleError(res, error as Error);
-        }
-    }
-
-    /**
-     * 디바이스 ID로 사용자 조회 (없으면 자동 등록)
-     * GET /api/user/device/:device_id/create
-     */
-    async getByDeviceIdOrCreate(req: Request, res: Response): Promise<void> {
         try {
             const { device_id } = req.params;
 
@@ -59,6 +37,7 @@ export class UserController extends BaseController<User> {
             this.handleError(res, error as Error);
         }
     }
+
 
     /**
      * 사용자 ID로 조회
